@@ -1,0 +1,20 @@
+# dependencies
+node_modules/
+
+# environment (keep .env.example)
+.env
+.env.*
+!.env.example
+
+# logs (keep the folder)
+logs/*
+!logs/.gitkeep
+*.log
+npm-debug.log*
+
+# misc
+.DS_Store
+coverage/
+.idea/
+.vscode/
+*.tgz
