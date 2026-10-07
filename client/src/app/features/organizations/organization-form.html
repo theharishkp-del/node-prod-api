@@ -1,0 +1,149 @@
+<div class="page narrow">
+  <div class="breadcrumb">
+    <a routerLink="/organizations">Organizations</a>
+    <mat-icon>chevron_right</mat-icon>
+    @if (isEdit()) {
+      <a [routerLink]="['/organizations', orgId()]">{{ org()?.name || orgId() }}</a>
+      <mat-icon>chevron_right</mat-icon>
+      <span>Edit</span>
+    } @else {
+      <span>New</span>
+    }
+  </div>
+  <div class="page-header">
+    <div>
+      <h1>{{ isEdit() ? 'Edit organization' : 'New organization' }}</h1>
+      <p class="subtitle">
+        @if (isEdit()) {
+          The organization ID and tenant database are fixed after creation.
+        } @else {
+          A dedicated tenant database is created for the organization.
+        }
+      </p>
+    </div>
+  </div>
+
+  <form class="card" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    @if (loading() || saving()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+
+    <div class="form-section">
+      <h3 class="section-title"><mat-icon>badge</mat-icon> General</h3>
+      <p class="section-text">How the organization is identified across the platform.</p>
+      <div class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" placeholder="Demo Cabinets" required />
+          <mat-error>{{ error('name') }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Organization ID</mat-label>
+          <input matInput formControlName="orgId" placeholder="generated from the name" class="mono" />
+          @if (isEdit()) {
+            <mat-hint>Database: <span class="mono">{{ org()?.dbName }}</span></mat-hint>
+          } @else {
+            <mat-hint>Optional. Database name will be iq_t_&lt;id&gt;</mat-hint>
+          }
+          <mat-error>{{ error('orgId') }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>Legal name</mat-label>
+          <input matInput formControlName="legalName" placeholder="Demo Cabinets Pvt Ltd" />
+          <mat-error>{{ error('legalName') }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <mat-icon matPrefix>mail_outline</mat-icon>
+          <input matInput type="email" formControlName="email" placeholder="admin@company.com" />
+          <mat-error>{{ error('email') }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Phone</mat-label>
+          <mat-icon matPrefix>call</mat-icon>
+          <input matInput formControlName="phone" placeholder="+91 80 4000 1234" />
+          <mat-error>{{ error('phone') }}</mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="form-section" formGroupName="address">
+      <h3 class="section-title"><mat-icon>place</mat-icon> Address</h3>
+      <p class="section-text">Used on documents and in the admin console.</p>
+      <div class="form-grid">
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>Address line 1</mat-label>
+          <input matInput formControlName="line1" />
+          <mat-error>{{ error('address.line1') }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>Address line 2</mat-label>
+          <input matInput formControlName="line2" />
+          <mat-error>{{ error('address.line2') }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>City</mat-label>
+          <input matInput formControlName="city" />
+          <mat-error>{{ error('address.city') }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>State / region</mat-label>
+          <input matInput formControlName="state" />
+          <mat-error>{{ error('address.state') }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Postal code</mat-label>
+          <input matInput formControlName="postalCode" />
+          <mat-error>{{ error('address.postalCode') }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Country</mat-label>
+          <input matInput formControlName="country" />
+          <mat-error>{{ error('address.country') }}</mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3 class="section-title"><mat-icon>tune</mat-icon> Preferences</h3>
+      <p class="section-text">Defaults applied to this tenant's orders and timestamps.</p>
+      <div class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Currency</mat-label>
+          <input matInput formControlName="currencyCode" [matAutocomplete]="cur" maxlength="3" class="mono" />
+          <mat-autocomplete #cur="matAutocomplete">
+            @for (c of currencies; track c) {
+              <mat-option [value]="c">{{ c }}</mat-option>
+            }
+          </mat-autocomplete>
+          <mat-error>{{ error('currencyCode') }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Time zone</mat-label>
+          <mat-icon matPrefix>schedule</mat-icon>
+          <input matInput formControlName="timezone" [matAutocomplete]="tz" />
+          <mat-autocomplete #tz="matAutocomplete">
+            @for (z of zoneOptions(); track z) {
+              <mat-option [value]="z">{{ z }}</mat-option>
+            }
+          </mat-autocomplete>
+          <mat-error>{{ error('timezone') }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>Logo URL</mat-label>
+          <mat-icon matPrefix>image</mat-icon>
+          <input matInput formControlName="logoUrl" placeholder="https://…/logo.png" />
+          <mat-error>{{ error('logoUrl') }}</mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <a matButton [routerLink]="isEdit() ? ['/organizations', orgId()] : ['/organizations']">Cancel</a>
+      <button matButton="filled" type="submit" [disabled]="saving() || loading()">
+        <mat-icon>{{ isEdit() ? 'save' : 'add' }}</mat-icon>
+        {{ isEdit() ? 'Save changes' : 'Create organization' }}
+      </button>
+    </div>
+  </form>
+</div>

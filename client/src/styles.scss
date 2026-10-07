@@ -1,0 +1,606 @@
+// IQ Agent Admin - global theme.
+// Angular Material M3 theme (indigo primary, teal tertiary, slate neutrals) + app tokens.
+// Light/dark use CSS light-dark(): toggling `color-scheme` on <html> (ThemeService)
+// switches Material and app colors together. Fonts (Inter, Material Icons outlined)
+// are self-hosted via angular.json styles (no external CDN).
+@use '@angular/material' as mat;
+@use 'theme-colors' as palettes;
+
+html {
+  color-scheme: light;
+  height: 100%;
+
+  @include mat.theme(
+    (
+      color: (
+        primary: palettes.$primary-palette,
+        tertiary: palettes.$tertiary-palette,
+      ),
+      typography: (
+        plain-family: 'Inter Variable, Inter, system-ui, sans-serif',
+        brand-family: 'Inter Variable, Inter, system-ui, sans-serif',
+      ),
+      density: 0,
+    )
+  );
+
+  // Slate neutrals instead of the generated (blue-tinted) surfaces.
+  @include mat.theme-overrides(
+    (
+      surface: light-dark(#ffffff, #111827),
+      surface-container-lowest: light-dark(#ffffff, #0b1220),
+      surface-container-low: light-dark(#f8fafc, #131c2e),
+      surface-container: light-dark(#f1f5f9, #172036),
+      surface-container-high: light-dark(#ffffff, #1b2540),
+      surface-container-highest: light-dark(#e8edf4, #222d49),
+      on-surface: light-dark(#0f172a, #e5e7eb),
+      on-surface-variant: light-dark(#475569, #9aa7bd),
+      outline: light-dark(#cbd5e1, #3b4863),
+      outline-variant: light-dark(#e2e8f0, #243049),
+    )
+  );
+
+  // App design tokens.
+  --app-bg: light-dark(#f4f6fb, #0a0f1c);
+  --app-card: light-dark(#ffffff, #111827);
+  --app-card-border: light-dark(#e6e9f2, #1f2a40);
+  --app-text: light-dark(#0f172a, #e5e7eb);
+  --app-muted: light-dark(#64748b, #94a3b8);
+  --app-subtle: light-dark(#f8fafc, #0f1626);
+  --app-hover: light-dark(#f5f7ff, #172036);
+  --app-primary: var(--mat-sys-primary);
+  --app-primary-soft: light-dark(#eef0ff, #1e1b4b);
+  --app-primary-strong: light-dark(#4338ca, #a5b4fc);
+  --app-teal-soft: light-dark(#e6fbf8, #0f2d2a);
+  --app-teal: light-dark(#0f766e, #5eead4);
+  --app-amber-soft: light-dark(#fff7e6, #33260b);
+  --app-amber: light-dark(#b45309, #fbbf24);
+  --app-red-soft: light-dark(#fff1f2, #3a1218);
+  --app-red: light-dark(#be123c, #fda4af);
+  --app-green-soft: light-dark(#ecfdf3, #0d2b1c);
+  --app-green: light-dark(#047857, #6ee7b7);
+  --app-shadow: 0 1px 2px rgb(15 23 42 / 0.04);
+  --app-shadow-md: 0 1px 3px rgb(15 23 42 / 0.05), 0 8px 24px -12px rgb(15 23 42 / 0.12);
+  --app-radius: 14px;
+  --app-radius-sm: 10px;
+  --app-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+
+html.dark {
+  color-scheme: dark;
+  --app-shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+  --app-shadow-md: 0 1px 3px rgb(0 0 0 / 0.45), 0 10px 28px -14px rgb(0 0 0 / 0.7);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--app-bg);
+  color: var(--app-text);
+  font: var(--mat-sys-body-medium);
+  font-family: 'Inter Variable', Inter, system-ui, sans-serif;
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--app-primary);
+  text-decoration: none;
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// ---- Layout helpers ------------------------------------------------------------
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+  @media (max-width: 720px) {
+    padding: 18px 14px 40px;
+  }
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+  }
+  .subtitle {
+    margin: 4px 0 0;
+    color: var(--app-muted);
+    font-size: 14px;
+  }
+  .actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--app-muted);
+  margin-bottom: 6px;
+  a {
+    color: var(--app-muted);
+  }
+  .mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.card {
+  background: var(--app-card);
+  border: 1px solid var(--app-card-border);
+  border-radius: var(--app-radius);
+  box-shadow: var(--app-shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--app-card-border);
+  h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .hint {
+    color: var(--app-muted);
+    font-size: 13px;
+  }
+}
+
+.card-body {
+  padding: 20px;
+}
+
+.card > mat-progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+}
+
+.grid {
+  display: grid;
+  gap: 20px;
+}
+
+.muted {
+  color: var(--app-muted);
+}
+
+.mono {
+  font-family: var(--app-mono);
+  font-size: 12.5px;
+}
+
+.text-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ---- Filters toolbar -------------------------------------------------------------
+.filters {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 14px 20px 0;
+
+  .search {
+    flex: 1 1 280px;
+    max-width: 420px;
+  }
+  .filter {
+    width: 190px;
+  }
+  .spacer {
+    flex: 1;
+  }
+}
+
+// Compact outlined fields inside filter bars.
+.filters .mat-mdc-form-field {
+  @include mat.form-field-density(-3);
+}
+.filters .mat-mdc-form-field-subscript-wrapper {
+  display: none;
+}
+
+// ---- Tables ----------------------------------------------------------------------
+.table-wrap {
+  overflow-x: auto;
+}
+
+table.app-table {
+  width: 100%;
+  background: transparent;
+
+  th.mat-mdc-header-cell {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--app-muted);
+    background: var(--app-subtle);
+    border-bottom-color: var(--app-card-border);
+    white-space: nowrap;
+  }
+  td.mat-mdc-cell {
+    border-bottom-color: var(--app-card-border);
+    font-size: 14px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  tr.mat-mdc-row {
+    height: 60px;
+  }
+  tr.clickable {
+    cursor: pointer;
+    transition: background 120ms ease;
+    &:hover {
+      background: var(--app-hover);
+    }
+  }
+  tr:last-child td.mat-mdc-cell {
+    border-bottom: none;
+  }
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  th.actions-col,
+  td.actions-col {
+    width: 56px;
+    text-align: right;
+  }
+}
+
+.mat-mdc-paginator {
+  background: transparent !important;
+  border-top: 1px solid var(--app-card-border);
+}
+
+// Name + secondary line cell.
+.cell-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  .title {
+    font-weight: 560;
+    color: var(--app-text);
+  }
+  .sub {
+    color: var(--app-muted);
+    font-size: 12.5px;
+  }
+}
+
+.avatar {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-weight: 650;
+  font-size: 13px;
+  color: var(--app-primary-strong);
+  background: var(--app-primary-soft);
+  overflow: hidden;
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  &.lg {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    font-size: 18px;
+  }
+  &.teal {
+    color: var(--app-teal);
+    background: var(--app-teal-soft);
+  }
+}
+
+// ---- Status chips ----------------------------------------------------------------
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--app-muted);
+  background: var(--app-subtle);
+  border: 1px solid var(--app-card-border);
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  &.plain::before {
+    display: none;
+  }
+  &.success {
+    color: var(--app-green);
+    background: var(--app-green-soft);
+    border-color: transparent;
+  }
+  &.warn {
+    color: var(--app-amber);
+    background: var(--app-amber-soft);
+    border-color: transparent;
+  }
+  &.danger {
+    color: var(--app-red);
+    background: var(--app-red-soft);
+    border-color: transparent;
+  }
+  &.info {
+    color: var(--app-primary-strong);
+    background: var(--app-primary-soft);
+    border-color: transparent;
+  }
+  &.teal {
+    color: var(--app-teal);
+    background: var(--app-teal-soft);
+    border-color: transparent;
+  }
+}
+
+.key-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-family: var(--app-mono);
+  font-size: 11.5px;
+  color: var(--app-muted);
+  background: var(--app-subtle);
+  border: 1px solid var(--app-card-border);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// ---- Empty / loading states ------------------------------------------------------
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 6px;
+  padding: 48px 24px;
+  color: var(--app-muted);
+
+  .state-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    background: var(--app-primary-soft);
+    color: var(--app-primary-strong);
+    margin-bottom: 8px;
+  }
+  .state-title {
+    color: var(--app-text);
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .state-text {
+    font-size: 13.5px;
+    max-width: 380px;
+  }
+  button {
+    margin-top: 10px;
+  }
+}
+
+// ---- Definition lists (detail pages) --------------------------------------------
+.dl {
+  display: grid;
+  grid-template-columns: minmax(120px, 34%) 1fr;
+  gap: 12px 16px;
+  margin: 0;
+  font-size: 14px;
+
+  dt {
+    color: var(--app-muted);
+  }
+  dd {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+// ---- Forms -----------------------------------------------------------------------
+.form-section {
+  padding: 22px 24px 6px;
+  border-bottom: 1px solid var(--app-card-border);
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .section-text {
+    margin: 0 0 18px;
+    color: var(--app-muted);
+    font-size: 13px;
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+  row-gap: 4px;
+
+  .span-2 {
+    grid-column: span 2;
+  }
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+    .span-2 {
+      grid-column: auto;
+    }
+  }
+  .mat-mdc-form-field {
+    width: 100%;
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  background: var(--app-subtle);
+  border-top: 1px solid var(--app-card-border);
+}
+
+// ---- Material tweaks -------------------------------------------------------------
+.mat-mdc-form-field {
+  @include mat.form-field-overrides(
+    (
+      outlined-container-shape: 10px,
+    )
+  );
+}
+
+.mat-mdc-button-base {
+  @include mat.button-overrides(
+    (
+      filled-container-shape: 10px,
+      outlined-container-shape: 10px,
+      text-container-shape: 10px,
+      tonal-container-shape: 10px,
+      filled-label-text-weight: 600,
+      outlined-label-text-weight: 600,
+      tonal-label-text-weight: 600,
+    )
+  );
+}
+
+.mat-mdc-snack-bar-container {
+  &.toast-success {
+    @include mat.snack-bar-overrides(
+      (
+        container-color: #065f46,
+        supporting-text-color: #ecfdf5,
+        button-color: #a7f3d0,
+      )
+    );
+  }
+  &.toast-error {
+    @include mat.snack-bar-overrides(
+      (
+        container-color: #9f1239,
+        supporting-text-color: #fff1f2,
+        button-color: #fecdd3,
+      )
+    );
+  }
+}
+
+.mat-mdc-dialog-container {
+  @include mat.dialog-overrides(
+    (
+      container-shape: 18px,
+    )
+  );
+}
+
+.mat-mdc-menu-panel {
+  @include mat.menu-overrides(
+    (
+      container-shape: 12px,
+    )
+  );
+}
+
+.mat-icon {
+  vertical-align: middle;
+}
+
+.icon-sm {
+  font-size: 18px !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.danger-text {
+  color: var(--app-red) !important;
+}
+
+.page.narrow {
+  max-width: 920px;
+}
+
+.filters .filter.wide {
+  width: 240px;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 4px 0 18px;
+  font-size: 13px;
+}
+
+.mat-mdc-form-field.full {
+  width: 100%;
+}

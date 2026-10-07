@@ -1,0 +1,99 @@
+<div class="page narrow">
+  <div class="breadcrumb">
+    <a routerLink="/bots">Bots</a>
+    <mat-icon>chevron_right</mat-icon>
+    <span>{{ isEdit() ? botUserId() : 'New' }}</span>
+  </div>
+  <div class="page-header">
+    <div>
+      <h1>{{ isEdit() ? 'Edit bot' : 'New bot' }}</h1>
+      <p class="subtitle">EO requests carrying this botUserId are routed to the selected organization.</p>
+    </div>
+  </div>
+
+  <form class="card" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    @if (loading() || saving()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+
+    <div class="form-section">
+      <h3 class="section-title"><mat-icon>smart_toy</mat-icon> Bot</h3>
+      <p class="section-text">Identifiers as configured on the bot platform.</p>
+      <div class="form-grid">
+        <mat-form-field appearance="outline">
+          <mat-label>Bot user ID</mat-label>
+          <input matInput formControlName="botUserId" placeholder="3183" class="mono" required />
+          <mat-hint>{{ isEdit() ? 'Cannot be changed' : 'payload.botUserId of EO requests' }}</mat-hint>
+          <mat-error>{{ error('botUserId') }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Name</mat-label>
+          <input matInput formControlName="name" placeholder="Demo Cabinets Bot" required />
+          <mat-error>{{ error('name') }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Bot database name</mat-label>
+          <input matInput formControlName="botDatabaseName" placeholder="SYSTEMBOT63183" class="mono" />
+          <mat-hint>payload.botDatabaseName</mat-hint>
+          <mat-error>{{ error('botDatabaseName') }}</mat-error>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Channel</mat-label>
+          <mat-select formControlName="channel">
+            @for (c of channels; track c) {
+              <mat-option [value]="c">{{ c }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3 class="section-title"><mat-icon>domain</mat-icon> Organization</h3>
+      <p class="section-text">The tenant whose database stores this bot's sessions.</p>
+      <div class="form-grid">
+        <mat-form-field appearance="outline" class="span-2">
+          <mat-label>Organization</mat-label>
+          <mat-select formControlName="orgId" required>
+            @for (o of orgs(); track o.orgId) {
+              <mat-option [value]="o.orgId">
+                {{ o.name }} <span class="muted mono">· {{ o.orgId }}</span>
+                @if (o.status !== 'active') {
+                  <span class="muted"> (suspended)</span>
+                }
+              </mat-option>
+            }
+          </mat-select>
+          @if (isEdit()) {
+            <mat-hint>Moving a bot keeps its past sessions in the previous tenant database.</mat-hint>
+          }
+          <mat-error>{{ error('orgId') }}</mat-error>
+        </mat-form-field>
+        @if (!isEdit()) {
+          <div class="span-2 toggle-row">
+            <mat-slide-toggle formControlName="active">Active</mat-slide-toggle>
+            <span class="muted">Inactive bots receive a "bot inactive" EO reply.</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h3 class="section-title"><mat-icon>data_object</mat-icon> Configuration</h3>
+      <p class="section-text">Optional bot-specific settings as a JSON object.</p>
+      <mat-form-field appearance="outline" class="full">
+        <mat-label>Config (JSON)</mat-label>
+        <textarea matInput formControlName="config" rows="5" class="mono" spellcheck="false"></textarea>
+        <mat-error>{{ error('config') }}</mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="form-actions">
+      <a matButton routerLink="/bots">Cancel</a>
+      <button matButton="filled" type="submit" [disabled]="saving() || loading()">
+        <mat-icon>{{ isEdit() ? 'save' : 'add' }}</mat-icon>
+        {{ isEdit() ? 'Save changes' : 'Create bot' }}
+      </button>
+    </div>
+  </form>
+</div>

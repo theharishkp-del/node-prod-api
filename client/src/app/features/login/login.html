@@ -1,0 +1,57 @@
+<div class="login">
+  <button class="theme" matIconButton (click)="theme.toggle()" aria-label="Toggle dark mode">
+    <mat-icon>{{ theme.mode() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+  </button>
+
+  <form class="card panel" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="logo">IQ</div>
+    <h1>IQ Agent Admin</h1>
+    <p class="lead">Enter the admin API key to manage organizations, bots and EO sessions.</p>
+
+    @if (expired) {
+      <div class="notice">
+        <mat-icon class="icon-sm">info</mat-icon>
+        Your admin key is no longer valid. Please sign in again.
+      </div>
+    }
+
+    <mat-form-field appearance="outline" class="field">
+      <mat-label>Admin API key</mat-label>
+      <mat-icon matPrefix>key</mat-icon>
+      <input
+        matInput
+        [type]="hide() ? 'password' : 'text'"
+        formControlName="key"
+        autocomplete="current-password"
+        spellcheck="false"
+      />
+      <button
+        matIconButton
+        matSuffix
+        type="button"
+        (click)="hide.set(!hide())"
+        [attr.aria-label]="hide() ? 'Show key' : 'Hide key'"
+      >
+        <mat-icon>{{ hide() ? 'visibility' : 'visibility_off' }}</mat-icon>
+      </button>
+      @if (error()) {
+        <mat-hint class="error" role="alert">{{ error() }}</mat-hint>
+      } @else {
+        <mat-hint>Sent as the x-admin-key header</mat-hint>
+      }
+    </mat-form-field>
+
+    <button matButton="filled" class="submit" type="submit" [disabled]="key.invalid || busy()">
+      @if (busy()) {
+        <mat-spinner diameter="18" />
+      } @else {
+        Continue
+      }
+    </button>
+
+    <p class="foot">
+      <mat-icon class="icon-sm">lock</mat-icon>
+      The key is stored in this browser only (localStorage) and never bundled into the app.
+    </p>
+  </form>
+</div>

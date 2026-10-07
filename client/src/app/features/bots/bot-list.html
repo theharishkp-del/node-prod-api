@@ -1,0 +1,133 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>Bots</h1>
+      <p class="subtitle">Bot platform accounts and the organization their EO requests are routed to.</p>
+    </div>
+    <div class="actions">
+      <a matButton="filled" routerLink="/bots/new" [queryParams]="orgId.value ? { orgId: orgId.value } : {}">
+        <mat-icon>add</mat-icon> New bot
+      </a>
+    </div>
+  </div>
+
+  <section class="card">
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+    <div class="filters">
+      <mat-form-field appearance="outline" class="search">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [formControl]="search" placeholder="Search bot ID, name or bot database" aria-label="Search" />
+        @if (search.value) {
+          <button matIconButton matSuffix (click)="search.setValue('')" aria-label="Clear search">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="filter wide">
+        <mat-select [formControl]="orgId" aria-label="Organization filter">
+          <mat-option value="">All organizations</mat-option>
+          @for (o of orgs(); track o.orgId) {
+            <mat-option [value]="o.orgId">{{ o.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="filter">
+        <mat-select [formControl]="status" aria-label="Status filter">
+          <mat-option value="">All statuses</mat-option>
+          <mat-option value="active">Active</mat-option>
+          <mat-option value="inactive">Inactive</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <span class="spacer"></span>
+      <span class="muted">{{ meta().total }} {{ meta().total === 1 ? 'bot' : 'bots' }}</span>
+    </div>
+
+    @if (items().length) {
+      <div class="table-wrap">
+        <table mat-table [dataSource]="items()" class="app-table">
+          <ng-container matColumnDef="bot">
+            <th mat-header-cell *matHeaderCellDef>Bot</th>
+            <td mat-cell *matCellDef="let b">
+              <div class="cell-main">
+                <div class="avatar teal"><mat-icon class="icon-sm">smart_toy</mat-icon></div>
+                <div>
+                  <div class="title">{{ b.name }}</div>
+                  <div class="sub mono">{{ b.botUserId }}</div>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="organization">
+            <th mat-header-cell *matHeaderCellDef>Organization</th>
+            <td mat-cell *matCellDef="let b">
+              @if (b.organization) {
+                <a [routerLink]="['/organizations', b.orgId]">{{ b.organization.name }}</a>
+                @if (b.organization.status !== 'active') {
+                  <app-status-chip [status]="b.organization.status" />
+                }
+              } @else {
+                <span class="mono muted">{{ b.orgId }}</span>
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="platformDb">
+            <th mat-header-cell *matHeaderCellDef>Bot database</th>
+            <td mat-cell *matCellDef="let b" class="mono">{{ b.botDatabaseName || '—' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="channel">
+            <th mat-header-cell *matHeaderCellDef>Channel</th>
+            <td mat-cell *matCellDef="let b"><span class="chip plain">{{ b.channel }}</span></td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let b"><app-status-chip [status]="b.status" /></td>
+          </ng-container>
+          <ng-container matColumnDef="updatedAt">
+            <th mat-header-cell *matHeaderCellDef>Updated</th>
+            <td mat-cell *matCellDef="let b" class="muted">{{ b.updatedAt | date: 'mediumDate' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="actions-col"></th>
+            <td mat-cell *matCellDef="let b" class="actions-col">
+              <button matIconButton [matMenuTriggerFor]="menu" aria-label="Actions">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #menu="matMenu" xPosition="before">
+                <a mat-menu-item [routerLink]="['/bots', b.botUserId, 'edit']"><mat-icon>edit</mat-icon>Edit</a>
+                <button mat-menu-item (click)="toggleStatus(b)">
+                  <mat-icon>{{ b.status === 'active' ? 'pause_circle' : 'play_circle' }}</mat-icon>
+                  {{ b.status === 'active' ? 'Deactivate' : 'Activate' }}
+                </button>
+                <button mat-menu-item class="danger-text" (click)="remove(b)">
+                  <mat-icon class="danger-text">delete_outline</mat-icon>Delete
+                </button>
+              </mat-menu>
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <tr mat-row *matRowDef="let b; columns: columns"></tr>
+        </table>
+      </div>
+      <mat-paginator
+        [length]="meta().total"
+        [pageIndex]="meta().page - 1"
+        [pageSize]="meta().limit"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="onPage($event)"
+        showFirstLastButtons
+      />
+    } @else if (loaded()) {
+      @if (search.value || orgId.value || status.value) {
+        <app-empty-state icon="search_off" title="No matching bots" text="Try another search term or filter.">
+          <button matButton="outlined" (click)="clearFilters()">Clear filters</button>
+        </app-empty-state>
+      } @else {
+        <app-empty-state icon="smart_toy" title="No bots yet" text="Register a bot and link it to an organization.">
+          <a matButton="filled" routerLink="/bots/new"><mat-icon>add</mat-icon> New bot</a>
+        </app-empty-state>
+      }
+    }
+  </section>
+</div>

@@ -18,3 +18,9 @@ coverage/
 .idea/
 .vscode/
 *.tgz
+
+# Angular admin UI: build output is produced on the server (npm run client:build)
+public/admin/
+client/node_modules/
+client/.angular/
+client/dist/

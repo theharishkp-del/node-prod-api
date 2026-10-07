@@ -1,0 +1,137 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>Organizations</h1>
+      <p class="subtitle">Tenants of the platform. Each organization owns a dedicated database and its bots.</p>
+    </div>
+    <div class="actions">
+      <a matButton="filled" routerLink="/organizations/new"><mat-icon>add</mat-icon> New organization</a>
+    </div>
+  </div>
+
+  <section class="card">
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+    <div class="filters">
+      <mat-form-field appearance="outline" class="search">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput [formControl]="search" placeholder="Search name, ID or email" aria-label="Search" />
+        @if (search.value) {
+          <button matIconButton matSuffix (click)="search.setValue('')" aria-label="Clear search">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="filter">
+        <mat-select [formControl]="status" aria-label="Status filter">
+          <mat-option value="">All statuses</mat-option>
+          <mat-option value="active">Active</mat-option>
+          <mat-option value="suspended">Suspended</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <span class="spacer"></span>
+      <span class="muted">{{ meta().total }} {{ meta().total === 1 ? 'organization' : 'organizations' }}</span>
+    </div>
+
+    @if (items().length) {
+      <div class="table-wrap">
+        <table mat-table [dataSource]="items()" matSort (matSortChange)="onSort($event)" class="app-table">
+          <ng-container matColumnDef="name">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Organization</th>
+            <td mat-cell *matCellDef="let o">
+              <div class="cell-main">
+                <div class="avatar">
+                  @if (o.logoUrl) {
+                    <img [src]="o.logoUrl" alt="" />
+                  } @else {
+                    {{ o.name | initials }}
+                  }
+                </div>
+                <div>
+                  <div class="title">{{ o.name }}</div>
+                  <div class="sub mono">{{ o.orgId }}</div>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="contact">
+            <th mat-header-cell *matHeaderCellDef>Contact</th>
+            <td mat-cell *matCellDef="let o">
+              <div>{{ o.email || '—' }}</div>
+              <div class="muted">{{ o.phone }}</div>
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="currency">
+            <th mat-header-cell *matHeaderCellDef>Currency</th>
+            <td mat-cell *matCellDef="let o"><span class="chip plain">{{ o.currencyCode }}</span></td>
+          </ng-container>
+          <ng-container matColumnDef="bots">
+            <th mat-header-cell *matHeaderCellDef class="num">Bots</th>
+            <td mat-cell *matCellDef="let o" class="num">{{ o.botCount ?? 0 }}</td>
+          </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let o"><app-status-chip [status]="o.status" /></td>
+          </ng-container>
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header start="desc">Created</th>
+            <td mat-cell *matCellDef="let o" class="muted">{{ o.createdAt | date: 'mediumDate' }}</td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef class="actions-col"></th>
+            <td mat-cell *matCellDef="let o" class="actions-col" (click)="$event.stopPropagation()">
+              <button matIconButton [matMenuTriggerFor]="menu" aria-label="Actions">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+              <mat-menu #menu="matMenu" xPosition="before">
+                <a mat-menu-item [routerLink]="['/organizations', o.orgId]"><mat-icon>visibility</mat-icon>View</a>
+                <a mat-menu-item [routerLink]="['/organizations', o.orgId, 'edit']"><mat-icon>edit</mat-icon>Edit</a>
+                <a mat-menu-item routerLink="/bots/new" [queryParams]="{ orgId: o.orgId }">
+                  <mat-icon>add</mat-icon>Add bot
+                </a>
+                <button mat-menu-item (click)="toggleStatus(o)">
+                  <mat-icon>{{ o.status === 'active' ? 'pause_circle' : 'play_circle' }}</mat-icon>
+                  {{ o.status === 'active' ? 'Suspend' : 'Activate' }}
+                </button>
+                <button mat-menu-item class="danger-text" (click)="remove(o)">
+                  <mat-icon class="danger-text">delete_outline</mat-icon>Delete
+                </button>
+              </mat-menu>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columns"></tr>
+          <tr
+            mat-row
+            *matRowDef="let o; columns: columns"
+            class="clickable"
+            (click)="router.navigate(['/organizations', o.orgId])"
+          ></tr>
+        </table>
+      </div>
+      <mat-paginator
+        [length]="meta().total"
+        [pageIndex]="meta().page - 1"
+        [pageSize]="meta().limit"
+        [pageSizeOptions]="[10, 20, 50]"
+        (page)="onPage($event)"
+        showFirstLastButtons
+      />
+    } @else if (loaded()) {
+      @if (search.value || status.value) {
+        <app-empty-state icon="search_off" title="No matching organizations" text="Try another search term or status.">
+          <button matButton="outlined" (click)="clearFilters()">Clear filters</button>
+        </app-empty-state>
+      } @else {
+        <app-empty-state
+          icon="domain_add"
+          title="No organizations yet"
+          text="Create an organization to provision its tenant database."
+        >
+          <a matButton="filled" routerLink="/organizations/new"><mat-icon>add</mat-icon> New organization</a>
+        </app-empty-state>
+      }
+    }
+  </section>
+</div>

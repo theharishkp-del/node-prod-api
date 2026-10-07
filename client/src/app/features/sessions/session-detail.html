@@ -1,0 +1,134 @@
+<div class="page">
+  <div class="breadcrumb">
+    <a routerLink="/organizations">Organizations</a>
+    <mat-icon>chevron_right</mat-icon>
+    <a [routerLink]="['/organizations', orgId()]">{{ session()?.org?.name || orgId() }}</a>
+    <mat-icon>chevron_right</mat-icon>
+    <span>Session</span>
+  </div>
+
+  @if (session(); as s) {
+    <div class="page-header">
+      <div>
+        <h1>Session {{ s.sessionDate | sessionDate }}</h1>
+        <p class="subtitle">
+          Bot <span class="mono">{{ s.botUserId }}</span> · task <span class="mono">{{ s.taskId }}</span> ·
+          {{ s.messageCount ?? 0 }} messages
+        </p>
+      </div>
+      <div class="actions">
+        <button matButton="outlined" (click)="load()"><mat-icon>refresh</mat-icon> Refresh</button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="card info">
+        <div class="card-header"><h2>Request details</h2></div>
+        <div class="card-body">
+          <dl class="dl">
+            <dt>User</dt>
+            <dd>{{ s.fromEmail || '—' }}<br /><span class="muted mono">fromId {{ s.fromId || '—' }}</span></dd>
+            <dt>To</dt>
+            <dd class="mono">{{ s.toId || '—' }}</dd>
+            <dt>Task no.</dt>
+            <dd class="mono">{{ s.taskNo || '—' }}</dd>
+            <dt>Bot database</dt>
+            <dd class="mono">{{ s.botDatabaseName || '—' }}</dd>
+            <dt>Platform DB</dt>
+            <dd class="mono">{{ s.databaseName || '—' }}</dd>
+            <dt>Environment</dt>
+            <dd>{{ s.env || '—' }}</dd>
+            <dt>Device</dt>
+            <dd class="mono">{{ s.deviceId || '—' }}</dd>
+            <dt>Time zone</dt>
+            <dd>{{ s.localTimeZone || '—' }}</dd>
+            <dt>Created (platform)</dt>
+            <dd>{{ s.createdDate || '—' }}</dd>
+            <dt>First message</dt>
+            <dd>{{ s.firstMessageAt | date: 'medium' }}</dd>
+            <dt>Last message</dt>
+            <dd>{{ s.lastMessageAt | date: 'medium' }}</dd>
+            <dt>Last state</dt>
+            <dd>
+              @if (s.lastEoState) {
+                <app-status-chip [status]="s.lastEoState" />
+              } @else {
+                —
+              }
+            </dd>
+          </dl>
+        </div>
+      </aside>
+
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>Conversation</h2>
+            <div class="hint">Inbound user messages and the replies sent back to the bot platform</div>
+          </div>
+        </div>
+        @if (messages().length) {
+          <div class="timeline">
+            @for (m of messages(); track trackMessage($index, m)) {
+              <div class="msg" [class.out]="m.direction === 'out'">
+                <div class="bubble-avatar" [class.bot]="m.direction === 'out'">
+                  <mat-icon>{{ m.direction === 'in' ? 'person' : 'smart_toy' }}</mat-icon>
+                </div>
+                <div class="bubble-wrap">
+                  <div class="meta">
+                    <span class="who">{{ m.direction === 'in' ? 'User' : 'Agent reply' }}</span>
+                    <span class="time">{{ m.at | date: 'mediumTime' }}</span>
+                  </div>
+                  <div class="bubble">
+                    @if (m.questionKey || m.answerKey) {
+                      <div class="keys">
+                        @if (m.questionKey) {
+                          <span class="key-chip" matTooltip="questionKey">{{ m.questionKey }}</span>
+                        }
+                        @if (m.answerKey) {
+                          <mat-icon class="arrow">arrow_forward</mat-icon>
+                          <span class="key-chip" matTooltip="answerKey">{{ m.answerKey }}</span>
+                        }
+                      </div>
+                    }
+                    <div class="text">
+                      @for (seg of m.segments; track $index) {
+                        @if (seg.url) {
+                          <a [href]="seg.url" target="_blank" rel="noopener">{{ seg.text }}</a>
+                        } @else {
+                          {{ seg.text }}
+                        }
+                      } @empty {
+                        <span class="muted">(empty)</span>
+                      }
+                    </div>
+                    @if (m.direction === 'in' && m.expectedAns) {
+                      <div class="expected">Expected: {{ m.expectedAns }}</div>
+                    }
+                  </div>
+                  <div class="foot">
+                    @if (m.eoState) {
+                      <app-status-chip [status]="m.eoState" [label]="'eoState: ' + m.eoState" />
+                    }
+                    @if (m.resultText) {
+                      <span class="chip plain" [class.danger]="m.resultText === 'failure'">
+                        result {{ m.resultCode }} · {{ m.resultText }}
+                      </span>
+                    }
+                    @if (m.signalId) {
+                      <span class="mono signal" matTooltip="signalId">#{{ m.signalId }}</span>
+                    }
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <app-empty-state icon="chat_bubble_outline" title="No messages" />
+        }
+      </section>
+    </div>
+  } @else if (loading()) {
+    <div class="card"><mat-progress-bar mode="indeterminate" /><div class="state">Loading session…</div></div>
+  }
+</div>

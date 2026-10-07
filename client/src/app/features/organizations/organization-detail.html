@@ -1,0 +1,249 @@
+<div class="page">
+  <div class="breadcrumb">
+    <a routerLink="/organizations">Organizations</a>
+    <mat-icon>chevron_right</mat-icon>
+    <span>{{ org()?.name || orgId() }}</span>
+  </div>
+
+  @if (org(); as o) {
+    <div class="page-header">
+      <div class="title-block">
+        <div class="avatar lg">
+          @if (o.logoUrl) {
+            <img [src]="o.logoUrl" alt="" />
+          } @else {
+            {{ o.name | initials }}
+          }
+        </div>
+        <div>
+          <div class="title-line">
+            <h1>{{ o.name }}</h1>
+            <app-status-chip [status]="o.status" />
+          </div>
+          <p class="subtitle">
+            <span class="mono">{{ o.orgId }}</span>
+            <span class="sep">·</span>
+            <mat-icon class="icon-sm">storage</mat-icon>
+            <span class="mono">{{ o.dbName }}</span>
+          </p>
+        </div>
+      </div>
+      <div class="actions">
+        <a matButton="outlined" [routerLink]="['/organizations', o.orgId, 'edit']"><mat-icon>edit</mat-icon> Edit</a>
+        <button matButton="outlined" (click)="toggleStatus()">
+          <mat-icon>{{ o.status === 'active' ? 'pause_circle' : 'play_circle' }}</mat-icon>
+          {{ o.status === 'active' ? 'Suspend' : 'Activate' }}
+        </button>
+        <button matIconButton [matMenuTriggerFor]="more" aria-label="More actions">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+        <mat-menu #more="matMenu" xPosition="before">
+          <button mat-menu-item class="danger-text" (click)="remove()">
+            <mat-icon class="danger-text">delete_outline</mat-icon>Delete organization
+          </button>
+        </mat-menu>
+      </div>
+    </div>
+
+    <section class="tiles">
+      <div class="card tile">
+        <mat-icon class="t-icon teal">smart_toy</mat-icon>
+        <div>
+          <div class="t-value">{{ o.botCount ?? 0 }}</div>
+          <div class="t-label">Bots ({{ o.activeBotCount ?? 0 }} active)</div>
+        </div>
+      </div>
+      <div class="card tile">
+        <mat-icon class="t-icon violet">forum</mat-icon>
+        <div>
+          <div class="t-value">{{ o.sessionCount ?? 0 }}</div>
+          <div class="t-label">EO sessions</div>
+        </div>
+      </div>
+      <div class="card tile">
+        <mat-icon class="t-icon indigo">payments</mat-icon>
+        <div>
+          <div class="t-value">{{ o.currencyCode }}</div>
+          <div class="t-label">Currency</div>
+        </div>
+      </div>
+      <div class="card tile">
+        <mat-icon class="t-icon amber">schedule</mat-icon>
+        <div>
+          <div class="t-value small">{{ o.timezone }}</div>
+          <div class="t-label">Time zone</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="layout">
+      <section class="card">
+        <div class="card-header"><h2>Details</h2></div>
+        <div class="card-body">
+          <dl class="dl">
+            <dt>Legal name</dt>
+            <dd>{{ o.legalName || '—' }}</dd>
+            <dt>Email</dt>
+            <dd>
+              @if (o.email) {
+                <a [href]="'mailto:' + o.email">{{ o.email }}</a>
+              } @else {
+                —
+              }
+            </dd>
+            <dt>Phone</dt>
+            <dd>{{ o.phone || '—' }}</dd>
+            <dt>Address</dt>
+            <dd class="pre">{{ address() || '—' }}</dd>
+            <dt>Created</dt>
+            <dd>{{ o.createdAt | date: 'medium' }}</dd>
+            <dt>Updated</dt>
+            <dd>{{ o.updatedAt | date: 'medium' }}</dd>
+          </dl>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <div>
+            <h2>Bots</h2>
+            <div class="hint">EO requests are routed to this tenant by botUserId</div>
+          </div>
+          <a matButton="tonal" routerLink="/bots/new" [queryParams]="{ orgId: o.orgId }"><mat-icon>add</mat-icon> Add bot</a>
+        </div>
+        @if (bots().length) {
+          <div class="table-wrap">
+            <table mat-table [dataSource]="bots()" class="app-table">
+              <ng-container matColumnDef="bot">
+                <th mat-header-cell *matHeaderCellDef>Bot</th>
+                <td mat-cell *matCellDef="let b">
+                  <div class="cell-main">
+                    <div class="avatar teal"><mat-icon class="icon-sm">smart_toy</mat-icon></div>
+                    <div>
+                      <div class="title">{{ b.name }}</div>
+                      <div class="sub mono">{{ b.botUserId }}</div>
+                    </div>
+                  </div>
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="platformDb">
+                <th mat-header-cell *matHeaderCellDef>Bot database</th>
+                <td mat-cell *matCellDef="let b" class="mono">{{ b.botDatabaseName || '—' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="channel">
+                <th mat-header-cell *matHeaderCellDef>Channel</th>
+                <td mat-cell *matCellDef="let b"><span class="chip plain">{{ b.channel }}</span></td>
+              </ng-container>
+              <ng-container matColumnDef="status">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let b"><app-status-chip [status]="b.status" /></td>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef class="actions-col"></th>
+                <td mat-cell *matCellDef="let b" class="actions-col">
+                  <button matIconButton [matMenuTriggerFor]="botMenu" aria-label="Bot actions">
+                    <mat-icon>more_vert</mat-icon>
+                  </button>
+                  <mat-menu #botMenu="matMenu" xPosition="before">
+                    <a mat-menu-item [routerLink]="['/bots', b.botUserId, 'edit']"><mat-icon>edit</mat-icon>Edit</a>
+                    <button mat-menu-item (click)="toggleBot(b)">
+                      <mat-icon>{{ b.status === 'active' ? 'pause_circle' : 'play_circle' }}</mat-icon>
+                      {{ b.status === 'active' ? 'Deactivate' : 'Activate' }}
+                    </button>
+                    <button mat-menu-item class="danger-text" (click)="removeBot(b)">
+                      <mat-icon class="danger-text">delete_outline</mat-icon>Delete
+                    </button>
+                  </mat-menu>
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="botColumns"></tr>
+              <tr mat-row *matRowDef="let b; columns: botColumns"></tr>
+            </table>
+          </div>
+        } @else {
+          <app-empty-state icon="smart_toy" title="No bots yet" text="Register a bot so its EO requests reach this tenant." />
+        }
+      </section>
+    </div>
+
+    <section class="card sessions">
+      @if (loadingSessions()) {
+        <mat-progress-bar mode="indeterminate" />
+      }
+      <div class="card-header">
+        <div>
+          <h2>Recent EO sessions</h2>
+          <div class="hint">Stored in {{ o.dbName }}.eo_sessions, newest activity first</div>
+        </div>
+        <button matIconButton (click)="loadSessions()" matTooltip="Refresh" aria-label="Refresh sessions">
+          <mat-icon>refresh</mat-icon>
+        </button>
+      </div>
+      @if (sessions().length) {
+        <div class="table-wrap">
+          <table mat-table [dataSource]="sessions()" class="app-table">
+            <ng-container matColumnDef="session">
+              <th mat-header-cell *matHeaderCellDef>Session</th>
+              <td mat-cell *matCellDef="let s">
+                <div class="title">{{ s.sessionDate | sessionDate }}</div>
+                <div class="muted mono">task {{ s.taskId }}</div>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="bot">
+              <th mat-header-cell *matHeaderCellDef>Bot</th>
+              <td mat-cell *matCellDef="let s" class="mono">{{ s.botUserId }}</td>
+            </ng-container>
+            <ng-container matColumnDef="user">
+              <th mat-header-cell *matHeaderCellDef>User</th>
+              <td mat-cell *matCellDef="let s">
+                <div>{{ s.fromEmail || '—' }}</div>
+                <div class="muted mono">id {{ s.fromId || '—' }}</div>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="messages">
+              <th mat-header-cell *matHeaderCellDef class="num">Messages</th>
+              <td mat-cell *matCellDef="let s" class="num">{{ s.messageCount ?? 0 }}</td>
+            </ng-container>
+            <ng-container matColumnDef="last">
+              <th mat-header-cell *matHeaderCellDef>Last message</th>
+              <td mat-cell *matCellDef="let s" class="preview-cell">
+                @if (s.lastMessage; as m) {
+                  <div class="preview">
+                    <mat-icon class="icon-sm">{{ m.direction === 'in' ? 'south_west' : 'north_east' }}</mat-icon>
+                    <span class="text-ellipsis">{{ m.answerText || '(empty)' }}</span>
+                  </div>
+                }
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="when">
+              <th mat-header-cell *matHeaderCellDef>Last activity</th>
+              <td mat-cell *matCellDef="let s" class="muted nowrap">{{ s.lastMessageAt | timeAgo }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="sessionColumns"></tr>
+            <tr
+              mat-row
+              *matRowDef="let s; columns: sessionColumns"
+              class="clickable"
+              (click)="router.navigate(['/organizations', o.orgId, 'sessions', s._id])"
+            ></tr>
+          </table>
+        </div>
+        <mat-paginator
+          [length]="sessionMeta().total"
+          [pageIndex]="sessionMeta().page - 1"
+          [pageSize]="sessionMeta().limit"
+          [pageSizeOptions]="[10, 25, 50]"
+          (page)="onSessionPage($event)"
+        />
+      } @else if (!loadingSessions()) {
+        <app-empty-state
+          icon="forum"
+          title="No sessions yet"
+          text="Sessions appear here once a bot of this organization receives EO requests."
+        />
+      }
+    </section>
+  } @else if (loading()) {
+    <div class="card"><mat-progress-bar mode="indeterminate" /><div class="state">Loading organization…</div></div>
+  }
+</div>

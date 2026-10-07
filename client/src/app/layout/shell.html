@@ -1,0 +1,72 @@
+<mat-sidenav-container class="shell" autosize>
+  <mat-sidenav class="sidebar" [mode]="mode()" [opened]="!isMobile()" [fixedInViewport]="isMobile()">
+    <a class="brand" routerLink="/dashboard">
+      <span class="logo">IQ</span>
+      <span class="brand-text">
+        <span class="brand-name">IQ Agent</span>
+        <span class="brand-sub">Admin console</span>
+      </span>
+    </a>
+
+    <div class="nav-label">Overview</div>
+    <nav class="nav">
+      @for (item of nav; track item.link) {
+        <a class="nav-item" [routerLink]="item.link" routerLinkActive="active">
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="footer-card">
+        <mat-icon>dns</mat-icon>
+        <div>
+          <div class="footer-title">Master + tenant DBs</div>
+          <div class="footer-text">One database per organization</div>
+        </div>
+      </div>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="content">
+    <mat-toolbar class="topbar">
+      @if (isMobile()) {
+        <button matIconButton (click)="sidenav().toggle()" aria-label="Toggle navigation">
+          <mat-icon>menu</mat-icon>
+        </button>
+      }
+      <span class="app-title">{{ appName }}</span>
+      <span class="spacer"></span>
+
+      @if (!keys.authRequired()) {
+        <span class="chip warn open-mode" matTooltip="ADMIN_API_KEY is not set on the server">Open mode</span>
+      }
+      <button
+        matIconButton
+        (click)="theme.toggle()"
+        [matTooltip]="theme.mode() === 'dark' ? 'Light mode' : 'Dark mode'"
+        aria-label="Toggle dark mode"
+      >
+        <mat-icon>{{ theme.mode() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+      <button matIconButton [matMenuTriggerFor]="account" aria-label="Account">
+        <span class="me">AD</span>
+      </button>
+      <mat-menu #account="matMenu" xPosition="before">
+        <div class="menu-head">
+          <div class="menu-title">Administrator</div>
+          <div class="menu-sub">{{ keys.authRequired() ? 'Signed in with admin key' : 'No admin key required' }}</div>
+        </div>
+        <button mat-menu-item (click)="signOut()">
+          <mat-icon>logout</mat-icon>
+          <span>{{ keys.authRequired() ? 'Sign out' : 'Change admin key' }}</span>
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+
+    <main>
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>
