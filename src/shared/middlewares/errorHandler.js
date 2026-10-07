@@ -26,7 +26,11 @@ function normaliseError(err) {
   if (err instanceof AppError) return err;
 
   if (err instanceof ZodError) {
-    const details = err.issues.map((i) => ({ path: i.path.join('.'), message: i.message }));
+    // Unknown keys (strict objects) carry the key names in `keys`, not in `path`.
+    const details = err.issues.map((i) => ({
+      path: [...i.path, ...(i.code === 'unrecognized_keys' ? [i.keys.join(',')] : [])].join('.'),
+      message: i.message,
+    }));
     return new AppError('Validation failed', 400, 'VALIDATION_ERROR', details);
   }
 

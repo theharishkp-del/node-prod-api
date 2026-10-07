@@ -8,11 +8,13 @@
 const { Router } = require('express');
 const healthRoutes = require('../modules/health/health.routes');
 const customerOrderRequestEoRoutes = require('../modules/customerOrderRequestEo/customerOrderRequestEo.routes');
+const adminRoutes = require('../modules/admin/admin.routes');
 
 /** @type {Array<{path: string, router: import('express').Router}>} */
 const MODULES = [
   { path: '/health', router: healthRoutes },
   { path: '/api/customerOrderRequestEo', router: customerOrderRequestEoRoutes },
+  { path: '/api/admin', router: adminRoutes },
 ];
 
 /**
