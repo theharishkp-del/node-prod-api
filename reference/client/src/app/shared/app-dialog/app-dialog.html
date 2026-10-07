@@ -1,0 +1,23 @@
+<div *ngIf="appDialogService.dialogState() as dialog" class="dialog-backdrop" aria-live="assertive" aria-modal="true" role="dialog">
+  <div class="dialog-panel">
+    <div class="dialog-copy">
+      <p class="dialog-eyebrow">{{ dialog.variant === 'confirm' ? 'Confirm Action' : 'Access Notice' }}</p>
+      <h2 class="dialog-title">{{ dialog.title }}</h2>
+      <p class="dialog-message">{{ dialog.message }}</p>
+    </div>
+
+    <div class="dialog-actions">
+      <button *ngIf="dialog.variant === 'confirm'" type="button" class="dialog-button-secondary" (click)="cancelDialog()">
+        {{ dialog.cancelLabel || 'Cancel' }}
+      </button>
+      <button
+        type="button"
+        [class.dialog-button-danger]="dialog.variant === 'confirm'"
+        [class.dialog-button]="dialog.variant !== 'confirm'"
+        (click)="dialog.variant === 'confirm' ? confirmDialog() : closeDialog()"
+      >
+        {{ dialog.buttonLabel || 'Okay' }}
+      </button>
+    </div>
+  </div>
+</div>

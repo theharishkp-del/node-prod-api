@@ -1,0 +1,73 @@
+:host {
+  display: block;
+  font-size: 0.85rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.82rem;
+}
+
+.flex {
+  gap: 0.5rem;
+}
+
+button.btn-secondary {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.82rem;
+}
+
+p {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+}
+
+.form-label {
+  margin-bottom: 0.2rem;
+}
+
+input.w-full {
+  font-size: 0.88rem;
+  padding: 0.45rem 0;
+}
+
+.fixed .h-\[80vh\] {
+  height: 70vh;
+}
+
+.fixed .w-\[80vw\] {
+  width: 85vw;
+}
+
+.h-\[calc\(80vh-8rem\)\] {
+  height: calc(70vh - 5rem);
+}
+
+.rounded-lg {
+  border-radius: 0.75rem;
+}
+
+.p-4 {
+  padding: 0.75rem;
+}
+
+.mt-2 {
+  margin-top: 0.4rem;
+}
+
+.mt-4 {
+  margin-top: 0.85rem;
+}
+
+.bg-white {
+  background: white;
+}
+
+.border {
+  border-width: 1px;
+}
+
+.border-gray-300 {
+  border-color: #d1d5db;
+}

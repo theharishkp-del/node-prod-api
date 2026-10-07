@@ -1,0 +1,79 @@
+<section class="zoho-page">
+  <article class="zoho-card">
+    <p class="zoho-kicker" [class.zoho-kicker-error]="status === 'error'">
+      {{ status === 'error' ? 'Zoho Books Connection Failed' : (status === 'selection_required' ? 'Zoho Books Organization Required' : 'Zoho Books Connected') }}
+    </p>
+    <h2 class="zoho-title">
+      {{ message }}
+    </h2>
+    <p class="zoho-copy" *ngIf="organizationName && status !== 'selection_required'">
+      Connected organization: {{ organizationName }}
+    </p>
+    <p class="zoho-copy" *ngIf="!organizationName && status === 'success'">
+      You can go back to the bot now.
+    </p>
+
+    <p *ngIf="statusLoading" class="zoho-copy">Loading Zoho Books organization details...</p>
+    <p *ngIf="statusError" class="zoho-note">{{ statusError }}</p>
+    <p *ngIf="selectionMessage" class="zoho-success-note">{{ selectionMessage }}</p>
+
+    <div *ngIf="status === 'selection_required' && !statusLoading && accessibleOrganizations.length > 1" class="zoho-picker">
+      <label class="zoho-picker-label" *ngFor="let organization of accessibleOrganizations">
+        <input
+          type="radio"
+          name="zohoOrganization"
+          [value]="organization.organizationId"
+          [checked]="selectedOrganizationId === organization.organizationId"
+          (change)="selectedOrganizationId = organization.organizationId"
+          [disabled]="organizationLocked || selectingOrganization"
+        />
+        <span class="zoho-picker-copy">
+          <span class="zoho-picker-title">{{ organization.name }}</span>
+          <span class="zoho-picker-meta">{{ organization.organizationId }}{{ organization.isDefault ? ' • Default' : '' }}</span>
+        </span>
+      </label>
+
+      <button
+        type="button"
+        class="btn-primary"
+        (click)="saveOrganizationSelection()"
+        [disabled]="!selectedOrganizationId || selectingOrganization || organizationLocked"
+      >
+        {{ selectingOrganization ? 'Saving...' : 'Use This Organization' }}
+      </button>
+    </div>
+
+    <div *ngIf="status === 'importing' && initialImport" class="zoho-import-panel">
+      <p class="zoho-copy">
+        Initial Zoho Books import is in progress. This may take a few moments depending on your record volume.
+      </p>
+
+      <div class="zoho-module-list">
+        <article *ngFor="let module of initialImport.modules; trackBy: trackByImportModule" class="zoho-module-card">
+          <div class="zoho-module-top">
+            <div>
+              <p class="zoho-module-title">{{ module.label }}</p>
+              <p class="zoho-module-meta">
+                Imported {{ module.importedCount }} of {{ module.fetchedCount || 0 }}
+              </p>
+            </div>
+            <span [class]="getModuleStatusClass(module.status)">
+              {{ getModuleStatusLabel(module.status) }}
+            </span>
+          </div>
+          <p *ngIf="module.lastError" class="zoho-note">{{ module.lastError }}</p>
+        </article>
+      </div>
+    </div>
+
+    <p *ngIf="status === 'selection_required' && !statusLoading && !statusError && statusLoaded && accessibleOrganizations.length === 0" class="zoho-note">
+      No Zoho Books organizations were returned for this account. Please reconnect and try again.
+    </p>
+
+    <p *ngIf="closeBlockedMessage" class="zoho-note">{{ closeBlockedMessage }}</p>
+
+    <div class="zoho-actions" *ngIf="status !== 'selection_required' || organizationLocked">
+      <button type="button" class="btn-primary" (click)="backToBot()">Go Back To Bot</button>
+    </div>
+  </article>
+</section>

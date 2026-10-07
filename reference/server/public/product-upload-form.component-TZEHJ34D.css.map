@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/master-data/product-upload/product-upload-form.component.css"],
+  "sourcesContent": [".master-modal {\n  width: min(100%, 72rem);\n  max-height: min(90vh, 54rem);\n  overflow-y: auto;\n  border-radius: 1.75rem;\n  border: 1px solid #dbe2ea;\n  background: #ffffff;\n  padding: 1.15rem;\n  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.2);\n}\n\n.close-modal-button {\n  border: 0;\n  background: transparent;\n  color: #64748b;\n  font-size: 0.82rem;\n  font-weight: 600;\n}\n"],
+  "mappings": ";AAAA,CAAA;AACE,SAAA,IAAA,IAAA,EAAA;AACA,cAAA,IAAA,IAAA,EAAA;AACA,cAAA;AACA,iBAAA;AACA,UAAA,IAAA,MAAA;AACA,cAAA;AACA,WAAA;AACA,cAAA,EAAA,KAAA,KAAA,KAAA,EAAA,EAAA,EAAA,EAAA,EAAA,EAAA;AACF;AAEA,CAAA;AACE,UAAA;AACA,cAAA;AACA,SAAA;AACA,aAAA;AACA,eAAA;AACF;",
+  "names": []
+}

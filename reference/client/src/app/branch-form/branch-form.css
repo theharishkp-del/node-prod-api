@@ -1,0 +1,37 @@
+form {
+  gap: 0.5rem;
+}
+
+h2 {
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+h3 {
+  font-size: 0.95rem;
+}
+
+p.mt-1,
+.text-sm {
+  font-size: 0.82rem;
+}
+
+label {
+  font-size: 0.78rem;
+  margin-bottom: 0.2rem;
+}
+
+.form-input,
+.form-select {
+  padding: 0.55rem 0.75rem;
+  font-size: 0.88rem;
+}
+
+section {
+  padding: 0.85rem;
+}
+
+button.btn {
+  padding: 0.55rem 0.85rem;
+  font-size: 0.8rem;
+}

@@ -1,0 +1,30 @@
+export const MASTER_DATA_QUOTES_COLLECTION = 'md_quotes';
+
+export const masterDataQuoteCollectionSchema = {
+  bsonType: 'object',
+  required: ['tenantId', 'botUserId', 'quoteNumber', 'customerId', 'quoteDate', 'lineItems', 'grandTotal', 'status', 'isDeleted', 'createdAt', 'updatedAt'],
+  additionalProperties: true,
+  properties: {
+    tenantId: { bsonType: 'string' },
+    botUserId: { bsonType: 'string' },
+    quoteNumber: { bsonType: 'string' },
+    customerId: { bsonType: 'objectId' },
+    quoteDate: { bsonType: 'date' },
+    expiryDate: { bsonType: ['date', 'null'] },
+    lineItems: { bsonType: 'array' },
+    subTotal: { bsonType: 'number' },
+    taxTotal: { bsonType: 'number' },
+    discountTotal: { bsonType: 'number' },
+    grandTotal: { bsonType: 'number' },
+    status: { bsonType: 'string' },
+    notes: { bsonType: ['string', 'null'] },
+    termsAndConditions: { bsonType: ['string', 'null'] },
+    isDeleted: { bsonType: 'bool' },
+    zohoEstimateId: { bsonType: ['string', 'null'] },
+    zohoSyncStatus: { bsonType: 'string' },
+    zohoLastSyncedAt: { bsonType: ['date', 'null'] },
+    zohoErrorMessage: { bsonType: ['string', 'null'] },
+    createdAt: { bsonType: 'date' },
+    updatedAt: { bsonType: 'date' },
+  },
+};

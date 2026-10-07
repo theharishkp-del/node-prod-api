@@ -1,0 +1,33 @@
+<main class="test-page">
+  <div class="test-banner">
+    <strong>API:</strong>
+    <code>http://localhost:3002/web/v1/master-data/calendar/events</code>
+    <span *ngIf="lastRange">
+      {{ lastRange.from | date:'mediumDate' }} – {{ lastRange.to | date:'mediumDate' }}
+    </span>
+  </div>
+
+  <app-template-calendar
+    [config]="calendarConfig"
+    [events]="events"
+    [badges]="badges"
+    [loading]="loading"
+    [refreshing]="refreshing"
+    [errorMessage]="errorMessage"
+    (rangeChange)="loadRange($event)"
+    (eventSelected)="showEventPayload($event)"
+  />
+</main>
+
+<div *ngIf="selectedEvent" class="payload-backdrop" (click)="closePayload()">
+  <section class="payload-dialog" (click)="$event.stopPropagation()">
+    <header>
+      <div>
+        <p>Selected server payload</p>
+        <h2>{{ selectedEvent.title }}</h2>
+      </div>
+      <button type="button" (click)="closePayload()">Close</button>
+    </header>
+    <pre>{{ selectedEvent.metadata | json }}</pre>
+  </section>
+</div>

@@ -1,0 +1,45 @@
+<div class="relative" [class]="panelWidthClass">
+  <button
+    type="button"
+    [class]="buttonClass"
+    [disabled]="disabled"
+    (click)="toggleDropdown()"
+  >
+    <span class="truncate text-left">
+      {{ selectedOption ? selectedOption.dialCode + ' ' + selectedOption.name : placeholder }}
+    </span>
+    <span class="text-slate-500">{{ isOpen() ? '▲' : '▼' }}</span>
+  </button>
+
+  <div
+    *ngIf="isOpen()"
+    class="absolute z-30 mt-2 max-h-80 w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl"
+  >
+    <div class="border-b border-slate-200 p-3">
+      <input
+        #searchInput
+        type="text"
+        class="form-input"
+        [value]="searchTerm()"
+        (input)="updateSearch($any($event.target).value)"
+        placeholder="Search country or code"
+      />
+    </div>
+
+    <div class="max-h-60 overflow-y-auto p-2">
+      <button
+        *ngFor="let option of filteredOptions()"
+        type="button"
+        class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100"
+        (click)="selectOption(option)"
+      >
+        <span class="truncate">{{ option.dialCode }} {{ option.name }}</span>
+        <span class="ml-3 shrink-0 text-xs text-slate-400">{{ option.code }}</span>
+      </button>
+
+      <p *ngIf="!filteredOptions().length" class="px-3 py-4 text-sm text-slate-500">
+        No matching country codes found.
+      </p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,22 @@
+:host {
+  display: contents;
+}
+
+.master-modal {
+  width: min(100%, 70rem);
+  max-height: min(90vh, 52rem);
+  overflow-y: auto;
+  border-radius: 1.75rem;
+  border: 1px solid #dbe2ea;
+  background: #ffffff;
+  padding: 1.15rem;
+  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.2);
+}
+
+.close-modal-button {
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 600;
+}

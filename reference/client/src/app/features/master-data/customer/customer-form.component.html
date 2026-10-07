@@ -1,0 +1,165 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-4 py-6">
+  <form [formGroup]="form" class="master-modal" (ngSubmit)="onSubmit()">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <p class="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">Customer</p>
+        <h3 class="mt-2 text-xl font-semibold text-slate-900">
+          {{ mode === 'create' ? 'Add Customer' : (mode === 'edit' ? 'Edit Customer' : 'View Customer') }}
+        </h3>
+      </div>
+      <button type="button" class="close-modal-button" (click)="onCancel()">Close</button>
+    </div>
+
+    <div *ngIf="errorMessage" class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+      {{ errorMessage }}
+    </div>
+
+    <div class="mt-5 grid gap-4 md:grid-cols-2">
+      <div>
+        <label class="form-label">Customer Prefix</label>
+        <input
+          class="form-input"
+          formControlName="customerCodePrefix"
+          [readonly]="!isCreateMode || isViewMode"
+          (input)="onCustomerCodePrefixChange()"
+        />
+      </div>
+      <div>
+        <label class="form-label">Customer Code</label>
+        <input class="form-input" formControlName="customerCode" [readonly]="isCreateMode || isViewMode" />
+      </div>
+      <div>
+        <label class="form-label">Tier <span class="text-red-600">(*)</span></label>
+        <select class="form-select" formControlName="tierId">
+          <option value="">Select tier</option>
+          <option *ngFor="let tier of tiers" [value]="tier.id">
+            {{ tier.tierKey }} - {{ tier.tierName }}
+          </option>
+        </select>
+        <p class="form-error" *ngIf="form.get('tierId')?.touched && form.get('tierId')?.hasError('required')">Tier is required.</p>
+      </div>
+      <div>
+        <label class="form-label">Customer Type</label>
+        <select class="form-select" formControlName="customerType">
+          <option value="business">Business</option>
+          <option value="individual">Individual</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Display Name <span class="text-red-600">(*)</span></label>
+        <input class="form-input" formControlName="displayName" maxlength="150" />
+        <p class="form-error" *ngIf="form.get('displayName')?.touched && form.get('displayName')?.hasError('required')">Display name is required.</p>
+        <p class="form-error" *ngIf="form.get('displayName')?.touched && form.get('displayName')?.hasError('maxlength')">Display name cannot exceed 150 characters.</p>
+      </div>
+      <div>
+        <label class="form-label">Company Name <span class="text-red-600">(*)</span></label>
+        <input class="form-input" formControlName="companyName" maxlength="150" />
+        <p class="form-error" *ngIf="form.get('companyName')?.touched && form.get('companyName')?.hasError('maxlength')">Company name cannot exceed 150 characters.</p>
+      </div>
+      <div>
+        <label class="form-label">Email <span class="text-red-600">(*)</span></label>
+        <input class="form-input" formControlName="email" />
+        <p class="form-error" *ngIf="form.get('email')?.touched && form.get('email')?.hasError('email')">Enter a valid email address.</p>
+      </div>
+      <div>
+        <label class="form-label">Phone</label>
+        <div class="flex gap-2">
+          <app-country-code-select
+            [options]="countryCodes"
+            [value]="form.get('phoneCountryCode')?.value || '+1'"
+            [valueChange]="onPhoneCountryCodeChange.bind(this)"
+            panelWidthClass="w-48"
+            buttonClass="form-select w-48 min-w-0 shrink-0"
+            [disabled]="isViewMode"
+          />
+          <div class="min-w-0 flex-1">
+            <input class="form-input w-full" formControlName="phone" />
+            <p class="form-error" *ngIf="form.get('phone')?.touched && form.get('phone')?.hasError('phoneDigitsOnly')">
+              Phone number must contain digits only.
+            </p>
+            <p class="form-error" *ngIf="form.get('phone')?.touched && form.get('phone')?.hasError('phoneLengthInvalid')">
+              {{ getPhoneLengthErrorMessage('phone', 'phoneCountryCode') }}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Mobile</label>
+        <div class="flex gap-2">
+          <app-country-code-select
+            [options]="countryCodes"
+            [value]="form.get('mobileCountryCode')?.value || '+1'"
+            [valueChange]="onMobileCountryCodeChange.bind(this)"
+            panelWidthClass="w-48"
+            buttonClass="form-select w-48 min-w-0 shrink-0"
+            [disabled]="isViewMode"
+          />
+          <div class="min-w-0 flex-1">
+            <input class="form-input w-full" formControlName="mobile" />
+            <p class="form-error" *ngIf="form.get('mobile')?.touched && form.get('mobile')?.hasError('phoneDigitsOnly')">
+              Mobile number must contain digits only.
+            </p>
+            <p class="form-error" *ngIf="form.get('mobile')?.touched && form.get('mobile')?.hasError('phoneLengthInvalid')">
+              {{ getPhoneLengthErrorMessage('mobile', 'mobileCountryCode') }}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">Currency Code <span class="text-red-600">(*)</span></label>
+        <select class="form-select" formControlName="currencyCode">
+          <option *ngFor="let currency of currencies" [value]="currency.code">
+            {{ currency.code }} - {{ currency.name }}
+          </option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">GST Number</label>
+        <input class="form-input" formControlName="gstNumber" />
+      </div>
+      <div>
+        <label class="form-label">Tax Treatment</label>
+        <input class="form-input" formControlName="taxTreatment" />
+      </div>
+      <div>
+        <label class="form-label">Payment Terms</label>
+        <input class="form-input" formControlName="paymentTerms" />
+      </div>
+      <div>
+        <label class="form-label">Status <span class="text-red-600">(*)</span></label>
+        <select class="form-select" formControlName="status">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+      <div class="md:col-span-2">
+        <label class="form-label">Billing Address <span class="text-red-600">(*)</span></label>
+        <textarea class="form-input min-h-28" formControlName="billingAddress" placeholder="Enter billing address"></textarea>
+        <p class="form-error" *ngIf="form.get('billingAddress')?.touched && form.get('billingAddress')?.hasError('required')">
+          Billing address is required.
+        </p>
+      </div>
+      <div class="md:col-span-2">
+        <label class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+          <input type="checkbox" formControlName="sameAsBillingAddress" (change)="onSameAsBillingChange()" />
+          Shipping address same as billing
+        </label>
+      </div>
+      <div class="md:col-span-2">
+        <label class="form-label">Shipping Address</label>
+        <textarea class="form-input min-h-28" formControlName="shippingAddress" placeholder="Enter shipping address"></textarea>
+      </div>
+    </div>
+
+    <p class="form-error mt-3" *ngIf="form.touched && form.hasError('emailOrPhoneRequired')">
+      Either email or phone is required.
+    </p>
+
+    <div class="mt-6 flex flex-wrap justify-end gap-3">
+      <button type="button" class="btn-secondary" (click)="onCancel()">{{ isViewMode ? 'Close' : 'Cancel' }}</button>
+      <button *ngIf="!isViewMode" type="submit" class="btn-primary" [disabled]="saving">
+        {{ saving ? 'Saving...' : (mode === 'create' ? 'Create Customer' : 'Save Changes') }}
+      </button>
+    </div>
+  </form>
+</div>

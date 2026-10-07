@@ -1,0 +1,199 @@
+<div
+  *ngIf="successMessage"
+  class="fixed right-4 top-4 z-[70] w-full max-w-md rounded-2xl border border-emerald-300 bg-emerald-600 px-4 py-4 text-white shadow-2xl"
+  role="status"
+  aria-live="polite"
+>
+  <div class="flex items-start justify-between gap-3">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-100">Success</p>
+      <p class="mt-1 text-sm font-medium leading-6">{{ successMessage }}</p>
+    </div>
+    <button type="button" class="text-sm font-semibold text-white/90 transition hover:text-white" (click)="dismissSuccessMessage()">Close</button>
+  </div>
+</div>
+
+<section class="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+  <div class="flex flex-col gap-2 xl:flex-row xl:items-end xl:justify-between">
+    <div>
+      <h3 class="text-base font-semibold text-slate-900">Invoices</h3>
+      <p class="mt-1 text-sm text-slate-600">Track invoice values, due dates, and balance status with local totals.</p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button
+        type="button"
+        class="btn-secondary px-3 py-1.5 text-xs"
+        (click)="syncAllInvoices()"
+        [disabled]="syncingAllInvoices || !hasInvoices"
+      >
+        {{ syncingAllInvoices ? 'Syncing All...' : 'Sync All Invoices' }}
+      </button>
+      <button type="button" class="btn-primary px-3 py-1.5 text-xs" (click)="openCreate()">Add Invoice</button>
+    </div>
+  </div>
+
+  <div class="flex flex-wrap gap-2 text-sm">
+    <div class="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
+      Total: <span class="font-semibold text-slate-900">{{ totalInvoicesCount }}</span>
+    </div>
+    <div class="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-700">
+      Synced: <span class="font-semibold text-emerald-900">{{ syncedInvoicesCount }}</span>
+    </div>
+    <div class="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-amber-700">
+      Pending: <span class="font-semibold text-amber-900">{{ pendingInvoicesCount }}</span>
+    </div>
+    <div class="rounded-full border border-red-200 bg-red-50 px-3 py-1.5 text-red-700">
+      Failed: <span class="font-semibold text-red-900">{{ failedInvoicesCount }}</span>
+    </div>
+  </div>
+
+  <div *ngIf="syncSummary?.lastOverallSyncedAt" class="text-sm text-slate-500">
+    Last overall sync: {{ syncSummary?.lastOverallSyncedAt | date:'medium' }}
+  </div>
+
+  <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+    <div class="relative flex-1">
+      <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0Z" />
+      </svg>
+      <input
+        class="form-input pl-9 pr-8"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="onSearchInput()"
+        placeholder="Search by invoice number, customer, quote ref, amount, balance, status, or notes…"
+        autocomplete="off"
+      />
+      <button
+        *ngIf="searchTerm"
+        type="button"
+        class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+        (click)="clearSearch()"
+        aria-label="Clear search"
+      >
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <select class="form-select sm:w-44" [(ngModel)]="statusFilter" (ngModelChange)="onStatusChange()">
+      <option value="">All Statuses</option>
+      <option value="draft">Draft</option>
+      <option value="sent">Sent</option>
+      <option value="partially_paid">Partially Paid</option>
+      <option value="paid">Paid</option>
+      <option value="overdue">Overdue</option>
+      <option value="void">Void</option>
+    </select>
+    <button type="button" class="btn-secondary px-3 py-1.5 text-xs" (click)="clearFilters()">Reset filters</button>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
+    </svg>
+    <label class="text-sm text-slate-500">Invoice date from</label>
+    <input type="date" class="form-input w-40" [(ngModel)]="dateFrom" [class.border-red-500]="hasDateRangeError" />
+    <label class="text-sm text-slate-500">to</label>
+    <input type="date" class="form-input w-40" [(ngModel)]="dateTo" [class.border-red-500]="hasDateRangeError" />
+    <button type="button" class="btn-primary px-3 py-1.5 text-xs" (click)="applyDateFilter()" [disabled]="loading || hasDateRangeError">Apply</button>
+    <button
+      *ngIf="dateFrom || dateTo"
+      type="button"
+      class="flex items-center gap-1 rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+      (click)="clearDates()"
+    >
+      <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+      Clear dates
+    </button>
+  </div>
+  <div *ngIf="dateRangeError" class="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-800">{{ dateRangeError }}</div>
+
+  <div *ngIf="errorMessage" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ errorMessage }}</div>
+  <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+    <table class="min-w-full divide-y divide-slate-200 text-sm">
+      <thead class="bg-slate-100 text-left text-slate-700">
+        <tr>
+          <th class="px-4 py-3 font-semibold">S.No</th>
+          <th class="px-4 py-3 font-semibold">Invoice</th>
+          <th class="px-4 py-3 font-semibold">Customer</th>
+          <th class="px-4 py-3 font-semibold">Due Date</th>
+          <th class="px-4 py-3 font-semibold">Grand Total</th>
+          <th class="px-4 py-3 font-semibold">Balance</th>
+          <th class="px-4 py-3 font-semibold">Status</th>
+          <th class="px-4 py-3 font-semibold">Zoho Sync</th>
+          <th class="px-4 py-3 font-semibold text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <tr *ngIf="loading"><td colspan="9" class="px-4 py-8 text-center text-slate-500">Loading invoices...</td></tr>
+        <tr *ngIf="!loading && !hasInvoices"><td colspan="9" class="px-4 py-8 text-center text-slate-500">No invoices found.</td></tr>
+        <tr *ngFor="let invoice of invoices; let index = index; trackBy: trackByInvoiceId">
+          <td class="px-4 py-3 text-slate-500">{{ getRowNumber(index) }}</td>
+          <td class="px-4 py-3">
+            <div class="font-semibold text-slate-900">{{ invoice.invoiceNumber }}</div>
+            <div class="text-xs text-slate-500">{{ invoice.quoteNumberRef || 'Direct invoice' }}</div>
+          </td>
+          <td class="px-4 py-3 text-slate-600">{{ invoice.customerDisplayName || invoice.customerId }}</td>
+          <td class="px-4 py-3 text-slate-600">{{ invoice.dueDate | date:'mediumDate' }}</td>
+          <td class="px-4 py-3 font-semibold text-slate-900">{{ invoice.grandTotal | number:'1.2-2' }}</td>
+          <td class="px-4 py-3 font-semibold text-slate-900">{{ invoice.balanceAmount | number:'1.2-2' }}</td>
+          <td class="px-4 py-3"><span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold capitalize text-slate-700">{{ invoice.status }}</span></td>
+          <td class="px-4 py-3">
+            <div class="space-y-1">
+              <span [class]="getZohoSyncBadgeClass(invoice)">{{ getZohoSyncLabel(invoice) }}</span>
+              <div class="text-xs text-slate-500" *ngIf="invoice.zohoLastSyncedAt">
+                {{ invoice.zohoLastSyncedAt | date:'medium' }}
+              </div>
+              <div class="text-xs text-red-600" *ngIf="invoice.zohoErrorMessage">
+                {{ invoice.zohoErrorMessage }}
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3">
+            <div class="flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                class="btn-secondary px-2.5 py-1 text-xs"
+                (click)="syncInvoice(invoice)"
+                [disabled]="syncingInvoiceId === invoice.id"
+              >
+                {{ syncingInvoiceId === invoice.id ? 'Syncing...' : 'Sync Now' }}
+              </button>
+              <button
+                type="button"
+                class="btn-secondary px-2.5 py-1 text-xs"
+                (click)="viewInvoicePdf(invoice)"
+                [disabled]="downloadingInvoiceId === invoice.id"
+              >
+                {{ downloadingInvoiceId === invoice.id ? 'Opening PDF...' : 'View PDF' }}
+              </button>
+              <button type="button" class="btn-secondary" (click)="openView(invoice)">View</button>
+              <button type="button" class="btn-secondary" (click)="openEdit(invoice)">Edit</button>
+              <button type="button" class="btn-danger" (click)="onDelete(invoice)" [disabled]="deletingId === invoice.id">
+                {{ deletingId === invoice.id ? 'Deleting...' : 'Delete' }}
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
+    <p>Page {{ pagination.page }} of {{ pagination.totalPages }} · {{ pagination.total }} records</p>
+    <div class="flex gap-2">
+      <button type="button" class="btn-secondary" (click)="goToPage(pagination.page - 1)" [disabled]="!pagination.hasPreviousPage">Previous</button>
+      <button type="button" class="btn-secondary" (click)="goToPage(pagination.page + 1)" [disabled]="!pagination.hasNextPage">Next</button>
+    </div>
+  </div>
+</section>
+
+<app-invoice-form
+  *ngIf="formOpen"
+  [mode]="formMode"
+  [invoice]="selectedInvoice"
+  [customers]="customers"
+  [quotes]="quotes"
+  [existingInvoiceNumbers]="existingInvoiceNumbers"
+  [saving]="saving"
+  [errorMessage]="formErrorMessage"
+  (cancel)="closeForm()"
+  (save)="onSave($event)"
+/>

@@ -1,0 +1,178 @@
+.lookup-toggle {
+  display: inline-flex;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  background: #e2e8f0;
+  padding: 0.25rem;
+  max-width: 100%;
+  flex-wrap: wrap;
+}
+
+.lookup-toggle-option {
+  border: 0;
+  border-radius: 9999px;
+  background: transparent;
+  padding: 0.55rem 0.9rem;
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: #475569;
+  transition: all 0.2s ease;
+}
+
+.lookup-toggle-option-active {
+  background: linear-gradient(135deg, #0f172a 0%, #155e75 100%);
+  color: #f8fafc;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.18);
+}
+
+.lookup-action-button {
+  border-color: #0f766e;
+  background: linear-gradient(135deg, #0f766e 0%, #0891b2 100%);
+  color: #f8fafc;
+  box-shadow: 0 12px 28px rgba(8, 145, 178, 0.24);
+}
+
+.lookup-action-button:hover:not(:disabled) {
+  border-color: #115e59;
+  background: linear-gradient(135deg, #115e59 0%, #0e7490 100%);
+}
+
+.lookup-action-button:disabled {
+  border-color: #99f6e4;
+  background: linear-gradient(135deg, #5eead4 0%, #67e8f9 100%);
+  color: rgba(15, 23, 42, 0.72);
+  box-shadow: none;
+}
+
+.staff-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.staff-card:hover {
+  transform: translateY(-2px);
+}
+
+.staff-card-admin {
+  border-color: #bfdbfe;
+  background: linear-gradient(135deg, #f8fbff 0%, #eef6ff 100%);
+}
+
+.staff-card-technician {
+  border-color: #a7f3d0;
+  background: linear-gradient(135deg, #f6fffb 0%, #ebfff6 100%);
+}
+
+.staff-role-badge {
+  display: inline-flex;
+  border-radius: 9999px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.staff-role-badge-admin {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.staff-role-badge-technician {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.role-modal {
+  border: 1px solid #e2e8f0;
+  padding: 0.9rem;
+}
+
+.close-modal-button {
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.role-choice-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-radius: 1.25rem;
+  border: 1px solid;
+  padding: 0.85rem;
+  text-align: left;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.role-choice-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 25px rgba(15, 23, 42, 0.08);
+}
+
+.role-choice-card-admin {
+  border-color: #93c5fd;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+}
+
+.role-choice-card-technician {
+  border-color: #6ee7b7;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+}
+
+.role-choice-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.role-choice-text {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #334155;
+}
+
+.staff-card {
+  padding: 0.85rem;
+}
+
+.staff-role-badge {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.72rem;
+}
+
+.lookup-actions > button,
+.wizard-actions > button {
+  min-width: 9rem;
+}
+
+.role-modal {
+  max-height: min(88vh, 42rem);
+  overflow-y: auto;
+}
+
+@media (max-width: 640px) {
+  .lookup-toggle {
+    width: 100%;
+  }
+
+  .lookup-toggle-option {
+    flex: 1 1 9rem;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .lookup-actions > button,
+  .wizard-actions > button {
+    width: 100%;
+  }
+
+  .staff-card:hover,
+  .role-choice-card:hover {
+    transform: none;
+  }
+
+  .role-modal {
+    border-radius: 1.5rem;
+    padding: 1rem;
+  }
+}

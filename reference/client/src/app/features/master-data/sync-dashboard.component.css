@@ -1,0 +1,247 @@
+.sync-summary-strip {
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.sync-auto-toggle-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  min-width: 320px;
+  border: 1px solid #dbe2ea;
+  border-radius: 0.9rem;
+  background: #ffffff;
+  padding: 0.7rem 0.85rem;
+}
+
+.sync-auto-toggle-card-disabled {
+  background: #f8fafc;
+}
+
+.sync-auto-toggle-copy {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.sync-auto-toggle-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sync-auto-toggle-note {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.sync-auto-toggle-switch {
+  position: relative;
+  width: 48px;
+  height: 28px;
+  border: 0;
+  border-radius: 9999px;
+  background: #cbd5e1;
+  transition: background 0.2s ease;
+}
+
+.sync-auto-toggle-switch-on {
+  background: #0f766e;
+}
+
+.sync-auto-toggle-switch-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.sync-auto-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
+  transition: transform 0.2s ease;
+}
+
+.sync-auto-toggle-switch-on .sync-auto-toggle-thumb {
+  transform: translateX(20px);
+}
+
+.sync-connection-banner {
+  border-radius: 0.9rem;
+  padding: 0.7rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.sync-connection-banner-connected {
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.sync-connection-banner-disconnected {
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.sync-summary-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  border: 1px solid #dbe2ea;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  padding: 0.5rem 0.65rem;
+}
+
+.sync-summary-chip-success {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.sync-summary-chip-pending {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.sync-summary-chip-failed {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.sync-summary-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.sync-summary-value {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sync-table {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.sync-table-head,
+.sync-table-row {
+  display: grid;
+  gap: 0.55rem;
+  grid-template-columns: minmax(0, 1.7fr) auto 70px 70px 70px 70px minmax(110px, 1fr) auto;
+  align-items: center;
+}
+
+.sync-table-head {
+  padding: 0 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.sync-table-row {
+  border: 1px solid #dbe2ea;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  padding: 0.6rem 0.7rem;
+}
+
+.sync-status-badge {
+  border-radius: 9999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sync-status-synced {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.sync-status-pending {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.sync-status-failed {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.sync-module-cell {
+  display: grid;
+  gap: 0.08rem;
+}
+
+.sync-module-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sync-module-note {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.sync-cell-value,
+.sync-cell-time {
+  font-size: 0.76rem;
+  color: #334155;
+}
+
+.sync-action-cell {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sync-action-tooltip {
+  display: inline-flex;
+}
+
+.sync-action-tooltip button[disabled] {
+  cursor: not-allowed;
+}
+
+@media (max-width: 1100px) {
+  .sync-summary-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sync-table-head {
+    display: none;
+  }
+
+  .sync-table-row {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+
+  .sync-action-cell {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 640px) {
+  .sync-auto-toggle-card {
+    min-width: 100%;
+  }
+
+  .sync-summary-strip {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,153 @@
+<section class="space-y-5 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+  <div class="history-hero">
+    <div>
+      <p class="history-eyebrow">Customer History</p>
+      <h2 class="history-title">{{ getVisibleCustomerName() }}</h2>
+      <p class="history-subtitle">Latest orders, quotes, invoices, and payments in one place.</p>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="history-empty">
+    <h3>Loading history...</h3>
+    <p>Please wait while we prepare your latest order details.</p>
+  </div>
+
+  <div *ngIf="!loading && errorMessage" class="history-empty history-empty-error">
+    <h3>Unable to load history</h3>
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <div *ngIf="!loading && !errorMessage && !historyItems.length" class="history-empty">
+    <h3>No customer history yet</h3>
+    <p>Order, quote, invoice, and payment details will appear here once records are available.</p>
+  </div>
+
+  <div *ngIf="!loading && !errorMessage && historyItems.length" class="history-list">
+    <article
+      *ngFor="let item of historyItems; let index = index; trackBy: trackByOrderReference"
+      class="history-card"
+      [class.history-card-expanded]="isExpanded(index, item)"
+      [class.history-card-paid]="item.invoice?.balanceAmount === 0"
+      [class.history-card-pending]="item.invoice?.balanceAmount !== 0"
+    >
+      <button type="button" class="history-card-header history-card-toggle" (click)="toggleExpanded(index, item)">
+        <div>
+          <p class="history-card-kicker">Order Reference</p>
+          <h3 class="history-card-title">{{ item.orderReferenceNumber || 'Order history' }}</h3>
+          <div class="history-meta-row">
+            <p class="history-card-date">
+              Latest activity:
+              {{ (item.latestActivityAt || item.requestedAt) | date:'medium' }}
+            </p>
+            <p class="history-card-date" *ngIf="item.requestedAt">
+              Ordered:
+              {{ item.requestedAt | date:'mediumDate' }}
+            </p>
+          </div>
+        </div>
+        <div class="history-card-summary">
+          <div class="history-pill-group">
+            <span class="history-pill history-pill-neutral">{{ item.status || 'open' }}</span>
+            <span
+              class="history-pill"
+              [class.history-pill-success]="item.paymentStatus === 'paid'"
+              [class.history-pill-warning]="item.paymentStatus !== 'paid'"
+            >
+              {{ item.paymentStatus || 'pending' }}
+            </span>
+          </div>
+          <div class="history-total">
+            <span>Total</span>
+            <strong>{{ item.invoice?.grandTotal != null ? (item.invoice?.grandTotal | number:'1.2-2') : '-' }}</strong>
+          </div>
+          <span class="history-chevron">{{ isExpanded(index, item) ? 'Hide' : 'View' }}</span>
+        </div>
+      </button>
+
+      <div class="history-quick-grid">
+        <div class="history-quick-card">
+          <span>Quote</span>
+          <strong>{{ item.quote?.quoteNumber || '-' }}</strong>
+        </div>
+        <div class="history-quick-card">
+          <span>Invoice</span>
+          <strong>{{ item.invoice?.invoiceNumber || '-' }}</strong>
+        </div>
+        <div class="history-quick-card">
+          <span>Items</span>
+          <strong>{{ item.items.length }}</strong>
+        </div>
+        <div class="history-quick-card">
+          <span>Payments</span>
+          <strong>{{ item.payments.length }}</strong>
+        </div>
+      </div>
+
+      <div *ngIf="isExpanded(index, item)" class="history-card-body">
+        <section class="history-panel">
+          <div class="history-panel-heading">Order Items</div>
+          <ul class="history-items">
+            <li *ngFor="let orderItem of item.items">
+              <span>{{ orderItem.name }}</span>
+              <strong>Qty {{ orderItem.quantity }}</strong>
+            </li>
+          </ul>
+          <p *ngIf="!item.items.length" class="history-muted">Order items are not available.</p>
+        </section>
+
+        <div class="history-grid">
+          <section class="history-panel">
+            <div class="history-panel-heading">Quote</div>
+            <p class="history-row"><span>Quote No</span><strong>{{ item.quote?.quoteNumber || '-' }}</strong></p>
+            <p class="history-row"><span>Status</span><strong>{{ item.quote?.status || '-' }}</strong></p>
+            <p class="history-row"><span>Accepted</span><strong>{{ item.quote?.accepted ? 'Yes' : 'No' }}</strong></p>
+            <p class="history-row"><span>Date</span><strong>{{ item.quote?.quoteDate ? (item.quote?.quoteDate | date:'mediumDate') : '-' }}</strong></p>
+            <a
+              *ngIf="item.quote?.pdf?.url"
+              class="history-link"
+              [href]="item.quote?.pdf?.url"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              View Quote PDF
+            </a>
+          </section>
+
+          <section class="history-panel">
+            <div class="history-panel-heading">Invoice</div>
+            <p class="history-row"><span>Invoice No</span><strong>{{ item.invoice?.invoiceNumber || '-' }}</strong></p>
+            <p class="history-row"><span>Status</span><strong>{{ item.invoice?.status || '-' }}</strong></p>
+            <p class="history-row"><span>Total</span><strong>{{ item.invoice?.grandTotal != null ? (item.invoice?.grandTotal | number:'1.2-2') : '-' }}</strong></p>
+            <p class="history-row"><span>Paid</span><strong>{{ item.invoice?.paidAmount != null ? (item.invoice?.paidAmount | number:'1.2-2') : '-' }}</strong></p>
+            <p class="history-row"><span>Balance</span><strong>{{ item.invoice?.balanceAmount != null ? (item.invoice?.balanceAmount | number:'1.2-2') : '-' }}</strong></p>
+            <a
+              *ngIf="item.invoice?.pdf?.url"
+              class="history-link"
+              [href]="item.invoice?.pdf?.url"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              View Invoice PDF
+            </a>
+          </section>
+        </div>
+
+        <section class="history-panel">
+          <div class="history-panel-heading">Payment details</div>
+          <div *ngIf="item.payments.length; else noPayments" class="history-payments">
+            <div *ngFor="let payment of item.payments" class="history-payment-card">
+              <p class="history-row"><span>Payment No</span><strong>{{ payment.paymentNumber || '-' }}</strong></p>
+              <p class="history-row"><span>Status</span><strong>{{ payment.status || '-' }}</strong></p>
+              <p class="history-row"><span>Date</span><strong>{{ payment.paymentDate ? (payment.paymentDate | date:'medium') : '-' }}</strong></p>
+              <p class="history-row"><span>Amount</span><strong>{{ payment.amount != null ? (payment.amount | number:'1.2-2') : '-' }}</strong></p>
+              <p class="history-row"><span>Reference</span><strong>{{ payment.referenceNumber || '-' }}</strong></p>
+            </div>
+          </div>
+          <ng-template #noPayments>
+            <p class="history-muted">No payment details available yet.</p>
+          </ng-template>
+        </section>
+      </div>
+    </article>
+  </div>
+</section>

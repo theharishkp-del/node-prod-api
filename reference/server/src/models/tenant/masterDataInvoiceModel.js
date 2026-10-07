@@ -1,0 +1,33 @@
+export const MASTER_DATA_INVOICES_COLLECTION = 'md_invoices';
+
+export const masterDataInvoiceCollectionSchema = {
+  bsonType: 'object',
+  required: ['tenantId', 'botUserId', 'invoiceNumber', 'customerId', 'invoiceDate', 'dueDate', 'lineItems', 'grandTotal', 'paidAmount', 'balanceAmount', 'status', 'isDeleted', 'createdAt', 'updatedAt'],
+  additionalProperties: true,
+  properties: {
+    tenantId: { bsonType: 'string' },
+    botUserId: { bsonType: 'string' },
+    invoiceNumber: { bsonType: 'string' },
+    customerId: { bsonType: 'objectId' },
+    quoteId: { bsonType: ['objectId', 'null'] },
+    invoiceDate: { bsonType: 'date' },
+    dueDate: { bsonType: 'date' },
+    lineItems: { bsonType: 'array' },
+    subTotal: { bsonType: 'number' },
+    taxTotal: { bsonType: 'number' },
+    discountTotal: { bsonType: 'number' },
+    grandTotal: { bsonType: 'number' },
+    paidAmount: { bsonType: 'number' },
+    balanceAmount: { bsonType: 'number' },
+    status: { bsonType: 'string' },
+    notes: { bsonType: ['string', 'null'] },
+    termsAndConditions: { bsonType: ['string', 'null'] },
+    isDeleted: { bsonType: 'bool' },
+    zohoInvoiceId: { bsonType: ['string', 'null'] },
+    zohoSyncStatus: { bsonType: 'string' },
+    zohoLastSyncedAt: { bsonType: ['date', 'null'] },
+    zohoErrorMessage: { bsonType: ['string', 'null'] },
+    createdAt: { bsonType: 'date' },
+    updatedAt: { bsonType: 'date' },
+  },
+};

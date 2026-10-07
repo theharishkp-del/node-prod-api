@@ -1,0 +1,137 @@
+<section class="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+  <div class="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+    <div>
+      <h3 class="text-base font-semibold text-slate-900">
+        {{ isSettingsView ? 'Zoho settings' : 'Zoho sync operations' }}
+      </h3>
+      <p class="mt-1 text-sm text-slate-600">
+        <ng-container *ngIf="isSettingsView; else syncSummaryCopy">
+          Control how Zoho Books stays connected and whether new customer, quote, invoice, and payment records sync automatically.
+        </ng-container>
+        <ng-template #syncSummaryCopy>
+        Keep customer, quote, invoice, and payment records synchronized when you need finance operations.
+        </ng-template>
+      </p>
+    </div>
+    <div class="flex flex-col items-start gap-2 xl:items-end" *ngIf="isSyncView">
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class="btn-secondary px-3 py-1.5 text-xs"
+          (click)="loadSummaries()"
+          [disabled]="loading || syncingAll"
+        >
+          {{ loading ? 'Refreshing...' : 'Refresh Summary' }}
+        </button>
+        <span class="sync-action-tooltip" [attr.title]="syncDisabledReason || null">
+          <button
+            type="button"
+            class="btn-primary px-3 py-1.5 text-xs"
+            (click)="syncAll()"
+            [disabled]="!canRunZohoSync || syncingAll || !!syncingModuleKey"
+          >
+            {{ syncingAll ? 'Running Zoho Sync...' : 'Run Zoho Sync' }}
+          </button>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sync-auto-toggle-card" [class.sync-auto-toggle-card-disabled]="!zohoConnected" *ngIf="isSettingsView">
+    <div class="sync-auto-toggle-copy">
+      <span class="sync-auto-toggle-label">Auto Sync to Zoho</span>
+      <span class="sync-auto-toggle-note">{{ autoSyncSaving ? 'Saving...' : autoSyncHint }}</span>
+    </div>
+    <button
+      type="button"
+      class="sync-auto-toggle-switch"
+      [class.sync-auto-toggle-switch-on]="autoSyncEnabled"
+      [class.sync-auto-toggle-switch-disabled]="!canToggleAutoSync"
+      [attr.aria-pressed]="autoSyncEnabled"
+      [disabled]="!canToggleAutoSync"
+      (click)="toggleAutoSync()"
+    >
+      <span class="sync-auto-toggle-thumb"></span>
+    </button>
+  </div>
+
+  <div
+    class="sync-connection-banner"
+    [class.sync-connection-banner-connected]="canRunZohoSync"
+    [class.sync-connection-banner-disconnected]="!canRunZohoSync"
+  >
+    {{ zohoConnectionLoading ? 'Checking Zoho connection...' : zohoStatusMessage }}
+  </div>
+
+  <div *ngIf="successMessage" class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+    {{ successMessage }}
+  </div>
+  <div *ngIf="errorMessage" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+    {{ errorMessage }}
+  </div>
+
+  <ng-container *ngIf="isSyncView">
+    <div class="sync-summary-strip">
+      <div class="sync-summary-chip">
+        <span class="sync-summary-label">Total</span>
+        <span class="sync-summary-value">{{ totalRecords }}</span>
+      </div>
+      <div class="sync-summary-chip sync-summary-chip-success">
+        <span class="sync-summary-label">Synced</span>
+        <span class="sync-summary-value">{{ totalSynced }}</span>
+      </div>
+      <div class="sync-summary-chip sync-summary-chip-pending">
+        <span class="sync-summary-label">Pending</span>
+        <span class="sync-summary-value">{{ totalPending }}</span>
+      </div>
+      <div class="sync-summary-chip sync-summary-chip-failed">
+        <span class="sync-summary-label">Failed</span>
+        <span class="sync-summary-value">{{ totalFailed }}</span>
+      </div>
+    </div>
+
+    <div class="sync-table">
+      <div class="sync-table-head">
+        <span>Module</span>
+        <span>Status</span>
+        <span>Total</span>
+        <span>Synced</span>
+        <span>Pending</span>
+        <span>Failed</span>
+        <span>Last Sync</span>
+        <span class="text-right">Action</span>
+      </div>
+
+      <article *ngFor="let card of cards" class="sync-table-row">
+        <div class="sync-module-cell">
+          <span class="sync-module-title">{{ card.label }}</span>
+          <span class="sync-module-note">{{ card.description }}</span>
+        </div>
+        <span [class]="getCardStatusClass(card)">{{ getCardStatusLabel(card) }}</span>
+        <span class="sync-cell-value">{{ card.total }}</span>
+        <span class="sync-cell-value">{{ card.synced }}</span>
+        <span class="sync-cell-value">{{ card.pending }}</span>
+        <span class="sync-cell-value">{{ card.failed }}</span>
+        <span class="sync-cell-time">
+          <ng-container *ngIf="card.lastOverallSyncedAt; else neverSynced">
+            {{ card.lastOverallSyncedAt | date:'short' }}
+          </ng-container>
+        </span>
+        <div class="sync-action-cell">
+          <span class="sync-action-tooltip" [attr.title]="syncDisabledReason || null">
+            <button
+              type="button"
+              class="btn-secondary px-2.5 py-1 text-xs"
+              (click)="syncModule(card.key)"
+              [disabled]="!canRunZohoSync || syncingAll || syncingModuleKey === card.key"
+            >
+              {{ syncingModuleKey === card.key ? 'Syncing...' : 'Sync with Zoho' }}
+            </button>
+          </span>
+        </div>
+      </article>
+    </div>
+  </ng-container>
+
+  <ng-template #neverSynced>Not synced</ng-template>
+</section>

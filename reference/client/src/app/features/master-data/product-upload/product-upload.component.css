@@ -1,0 +1,365 @@
+.upload-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+.upload-card {
+  border: 1px solid #dbe2ea;
+  border-radius: 1.2rem;
+  background: #ffffff;
+  padding: 1.25rem;
+  display: grid;
+  gap: 1.15rem;
+}
+
+.upload-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.upload-top-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.upload-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(16rem, 0.9fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.upload-main {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.upload-sidebar {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.upload-picker-row {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.upload-dropzone {
+  display: grid;
+  gap: 0.45rem;
+  border: 1.5px dashed #94a3b8;
+  border-radius: 1rem;
+  padding: 1rem 1.1rem;
+  background: #f8fafc;
+  cursor: pointer;
+  width: min(100%, 20rem);
+  min-height: 5.25rem;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.08);
+}
+
+.upload-dropzone:hover {
+  border-color: #0891b2;
+  background: #f0fdfa;
+}
+
+.upload-input {
+  display: none;
+}
+
+.upload-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.upload-hint {
+  font-size: 0.88rem;
+  color: #64748b;
+}
+
+.upload-file-note {
+  margin-top: -0.25rem;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.upload-file-note-name {
+  font-weight: 600;
+  color: #475569;
+}
+
+.upload-file-note-size {
+  color: #0891b2;
+}
+
+.upload-mode-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: end;
+}
+
+.upload-stats {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.upload-stat-card {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid #dbe2ea;
+  border-radius: 1rem;
+  background: #ffffff;
+  padding: 0.75rem 0.85rem;
+}
+
+.upload-stat-card-active {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+}
+
+.upload-stat-card-muted {
+  background: #f8fafc;
+}
+
+.upload-stat-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.upload-stat-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.upload-meta-card {
+  border: 1px solid #dbe2ea;
+  border-radius: 1rem;
+  background: linear-gradient(180deg, #f8fafc, #ffffff);
+  padding: 1rem;
+}
+
+.upload-meta-card-compact {
+  padding: 0.85rem 0.95rem;
+}
+
+.upload-meta-label {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.upload-meta-value {
+  margin: 0.45rem 0 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.upload-meta-copy {
+  margin: 0.45rem 0 0;
+  font-size: 0.88rem;
+  color: #64748b;
+}
+
+.upload-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.upload-meta-row .upload-meta-copy {
+  margin-top: 0.35rem;
+}
+
+.upload-alert {
+  border-radius: 0.95rem;
+  padding: 0.85rem 1rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.upload-alert-success {
+  background: #ecfdf5;
+  color: #166534;
+}
+
+.upload-alert-error {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.upload-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+@media (max-width: 720px) {
+  .upload-header,
+  .upload-layout,
+  .upload-mode-grid,
+  .upload-actions {
+    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .upload-sidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .upload-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .upload-top-actions {
+    justify-content: stretch;
+  }
+
+  .upload-top-actions > * {
+    width: 100%;
+  }
+
+  .upload-actions > * {
+    width: 100%;
+  }
+}
+
+@media (max-width: 980px) {
+  .upload-layout,
+  .upload-mode-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 721px) and (max-width: 980px) {
+  .upload-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ── Product image cell ────────────────────────────────────────────── */
+.product-img-cell {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+  border-radius: 0.5rem;
+  overflow: visible; /* allow hover preview to escape the cell */
+}
+
+.product-img {
+  width: 3rem;
+  height: 3rem;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  display: block;
+  transition: box-shadow 0.15s;
+}
+
+.product-img-cell:hover .product-img {
+  box-shadow: 0 0 0 2px #0891b2;
+}
+
+/* Large preview shown on hover */
+.product-img-cell:hover .product-img::after {
+  content: '';
+}
+
+/* Use a sibling wrapper approach: wrap img in .product-img-hover-wrap */
+.product-img-hover-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.product-img-hover-wrap img {
+  width: 3rem;
+  height: 3rem;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+  display: block;
+  transition: box-shadow 0.15s;
+}
+
+.product-img-hover-wrap:hover img {
+  box-shadow: 0 0 0 2px #0891b2;
+}
+
+/* The enlarged preview */
+.product-img-hover-wrap .product-img-preview {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10rem;
+  height: 10rem;
+  object-fit: cover;
+  border-radius: 0.75rem;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18);
+  z-index: 50;
+  pointer-events: none;
+  background: #ffffff;
+}
+
+.product-img-hover-wrap:hover .product-img-preview {
+  display: block;
+}
+
+.product-img-skeleton {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.5rem;
+  border: 1.5px dashed #cbd5e1;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.12s, background 0.12s;
+}
+
+.product-img-cell:hover .product-img-skeleton {
+  border-color: #0891b2;
+  background: #f0fdfe;
+}
+
+.product-img-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 0.5rem;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-img-spinner {
+  display: inline-block;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #ffffff;
+  border-radius: 9999px;
+  animation: img-spin 0.7s linear infinite;
+}
+
+@keyframes img-spin {
+  to { transform: rotate(360deg); }
+}

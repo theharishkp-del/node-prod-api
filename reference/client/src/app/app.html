@@ -1,0 +1,38 @@
+<main *ngIf="!hideShell; else missingKeyView" class="min-h-screen bg-slate-100 px-2 py-2 text-slate-900">
+  <div class="mx-auto max-w-6xl space-y-3">
+    <section class="rounded-3xl bg-slate-950 px-4 py-4 text-white shadow-xl md:px-5">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+        <div class="max-w-3xl">
+          <p class="text-sm font-medium uppercase tracking-[0.24em] text-cyan-300">Cybot Field Service and Maintenance Agent</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-200 md:p-5">
+      <div *ngIf="showStepStrip" class="step-strip">
+        <a
+          *ngFor="let step of steps; let index = index"
+          [routerLink]="isStepEnabled(step.route) ? step.route : null"
+          queryParamsHandling="preserve"
+          class="step-pill"
+          [class.step-pill-active]="isCurrentRoute(step.route)"
+          [class.step-pill-disabled]="!isStepEnabled(step.route)"
+        >
+          <span class="step-index">{{ index + 1 }}</span>
+          <span class="step-copy">
+            <span class="step-title">{{ step.title }}</span>
+          </span>
+        </a>
+      </div>
+
+      <div [class.mt-4]="showStepStrip" class="rounded-3xl bg-white">
+        <router-outlet />
+      </div>
+    </section>
+  </div>
+</main>
+<ng-template #missingKeyView>
+  <router-outlet />
+</ng-template>
+<app-full-screen-loader />
+<app-dialog />

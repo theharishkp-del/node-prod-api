@@ -1,0 +1,98 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 px-4 py-6">
+  <form [formGroup]="form" class="master-modal" (ngSubmit)="onSubmit()">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <p class="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">Payment</p>
+        <h3 class="mt-2 text-xl font-semibold text-slate-900">
+          {{ mode === 'create' ? 'Add Payment' : (mode === 'edit' ? 'Edit Payment' : 'View Payment') }}
+        </h3>
+      </div>
+      <button type="button" class="close-modal-button" (click)="cancel.emit()">Close</button>
+    </div>
+
+    <div *ngIf="errorMessage" class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ errorMessage }}</div>
+
+    <div class="mt-5 grid gap-4 md:grid-cols-2">
+      <div>
+        <label class="form-label">Payment Prefix</label>
+        <input
+          class="form-input"
+          formControlName="paymentNumberPrefix"
+          [readonly]="!isCreateMode || isViewMode"
+          (input)="onPaymentPrefixChange()"
+        />
+      </div>
+      <div>
+        <label class="form-label">Payment Number</label>
+        <input class="form-input" formControlName="paymentNumber" [readonly]="isCreateMode || isViewMode" />
+      </div>
+      <div>
+        <label class="form-label">Customer <span class="text-red-600">(*)</span></label>
+        <select class="form-select" formControlName="customerId" (change)="onCustomerChange()">
+          <option value="">Select customer</option>
+          <option *ngFor="let customer of customers" [value]="customer.id">{{ customer.displayName }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Invoice <span class="text-red-600">(*)</span></label>
+        <select class="form-select" formControlName="invoiceId" (change)="onInvoiceChange()">
+          <option value="">Select invoice</option>
+          <option *ngFor="let invoice of filteredInvoices" [value]="invoice.id">
+            {{ invoice.invoiceNumber }} · {{ invoice.balanceAmount | number:'1.2-2' }}
+          </option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Payment Date <span class="text-red-600">(*)</span></label>
+        <input type="date" class="form-input" formControlName="paymentDate" />
+      </div>
+      <div>
+        <label class="form-label">Amount <span class="text-red-600">(*)</span></label>
+        <input type="number" class="form-input" formControlName="amount" />
+      </div>
+      <div>
+        <label class="form-label">Payment Mode <span class="text-red-600">(*)</span></label>
+        <select class="form-select" formControlName="paymentMode">
+          <option value="cash">Cash</option>
+          <option value="bank_transfer">Bank Transfer</option>
+          <option value="upi">UPI</option>
+          <option value="card">Card</option>
+          <option value="cheque">Cheque</option>
+          <option value="payment_gateway">Payment Gateway</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Status <span class="text-red-600">(*)</span></label>
+        <select class="form-select" formControlName="status">
+          <option value="pending">Pending</option>
+          <option value="success">Success</option>
+          <option value="failed">Failed</option>
+          <option value="refunded">Refunded</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Reference Number</label>
+        <input class="form-input" formControlName="referenceNumber" />
+      </div>
+      <div>
+        <label class="form-label">Gateway Provider</label>
+        <input class="form-input" formControlName="gatewayProvider" />
+      </div>
+      <div>
+        <label class="form-label">Gateway Payment ID</label>
+        <input class="form-input" formControlName="gatewayPaymentId" />
+      </div>
+      <div class="md:col-span-2">
+        <label class="form-label">Notes</label>
+        <textarea class="form-input min-h-24" formControlName="notes"></textarea>
+      </div>
+    </div>
+
+    <div class="mt-6 flex flex-wrap justify-end gap-3">
+      <button type="button" class="btn-secondary" (click)="cancel.emit()">{{ isViewMode ? 'Close' : 'Cancel' }}</button>
+      <button *ngIf="!isViewMode" type="submit" class="btn-primary" [disabled]="saving">
+        {{ saving ? 'Saving...' : (mode === 'create' ? 'Create Payment' : 'Save Changes') }}
+      </button>
+    </div>
+  </form>
+</div>

@@ -1,0 +1,72 @@
+.master-tab-strip {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+}
+
+.master-tab-card {
+  border-radius: 9999px;
+  padding: 0.55rem 0.8rem;
+  text-align: center;
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.master-tab-card:hover {
+  transform: translateY(-1px);
+}
+
+.master-tab-card-neutral {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+}
+
+.master-tab-card-active-neutral {
+  border: 1px solid #0891b2;
+  background: #ecfeff;
+  box-shadow: 0 10px 20px rgba(8, 145, 178, 0.12);
+}
+
+.master-tab-card-work-order {
+  border: 1px solid #fdba74;
+  background: #fff7ed;
+}
+
+.master-tab-card-active-work-order {
+  border: 1px solid #ea580c;
+  background: #ffedd5;
+  box-shadow: 0 10px 20px rgba(234, 88, 12, 0.14);
+}
+
+.master-tab-card-sales {
+  border: 1px solid #a5b4fc;
+  background: #eef2ff;
+}
+
+.master-tab-card-active-sales {
+  border: 1px solid #4f46e5;
+  background: #e0e7ff;
+  box-shadow: 0 10px 20px rgba(79, 70, 229, 0.14);
+}
+
+.master-tab-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .master-tab-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .master-tab-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .master-tab-card {
+    border-radius: 0.9rem;
+  }
+}

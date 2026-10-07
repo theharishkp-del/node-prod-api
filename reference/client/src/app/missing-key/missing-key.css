@@ -1,0 +1,43 @@
+.missing-key-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background:
+    radial-gradient(circle at top, rgba(34, 211, 238, 0.14), transparent 28rem),
+    linear-gradient(180deg, #e2e8f0 0%, #f8fafc 100%);
+}
+
+.missing-key-card {
+  width: min(100%, 28rem);
+  border: 1px solid #cbd5e1;
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.12);
+}
+
+.missing-key-tag {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.missing-key-title {
+  margin: 0.65rem 0 0;
+  font-size: 1.4rem;
+  line-height: 1.2;
+  color: #0f172a;
+}
+
+.missing-key-text {
+  margin: 0.85rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #475569;
+}

@@ -1,0 +1,81 @@
+<section class="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+  <div class="flex flex-col gap-2 xl:flex-row xl:items-end xl:justify-between">
+    <div>
+      <h3 class="text-base font-semibold text-slate-900">Customers Without Work Order</h3>
+      <p class="mt-1 text-sm text-slate-600">Use this view to track inquiries or registered customers that have not yet converted into a work order.</p>
+    </div>
+  </div>
+
+  <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem_auto]">
+    <input class="form-input" [(ngModel)]="searchTerm" placeholder="Search by name, code, email, or phone" />
+    <select class="form-select" [(ngModel)]="statusFilter">
+      <option value="">All Statuses</option>
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+    </select>
+    <button type="button" class="btn-secondary" (click)="loadCustomers(1)">Search</button>
+  </div>
+
+  <div *ngIf="errorMessage" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+    {{ errorMessage }}
+  </div>
+
+  <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+    <table class="min-w-full divide-y divide-slate-200 text-sm">
+      <thead class="bg-slate-100 text-left text-slate-700">
+        <tr>
+          <th class="px-4 py-3 font-semibold">S.No</th>
+          <th class="px-4 py-3 font-semibold">Customer</th>
+          <th class="px-4 py-3 font-semibold">Contact</th>
+          <th class="px-4 py-3 font-semibold">Tier</th>
+          <th class="px-4 py-3 font-semibold">Status</th>
+          <th class="px-4 py-3 font-semibold">Zoho Sync</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        <tr *ngIf="loading">
+          <td colspan="6" class="px-4 py-8 text-center text-slate-500">Loading customers...</td>
+        </tr>
+        <tr *ngIf="!loading && !hasCustomers">
+          <td colspan="6" class="px-4 py-8 text-center text-slate-500">No customers without work orders found.</td>
+        </tr>
+        <tr *ngFor="let customer of customers; let index = index">
+          <td class="px-4 py-3 text-slate-500">{{ getRowNumber(index) }}</td>
+          <td class="px-4 py-3">
+            <div class="font-semibold text-slate-900">{{ customer.displayName }}</div>
+            <div class="text-xs text-slate-500">{{ customer.customerCode || 'No code' }}</div>
+          </td>
+          <td class="px-4 py-3 text-slate-600">
+            <div>{{ customer.email || customer.phone || 'Not provided' }}</div>
+            <div class="text-xs text-slate-500">{{ customer.companyName || 'No company name' }}</div>
+          </td>
+          <td class="px-4 py-3 text-slate-600">
+            <div>{{ customer.tierName || 'No tier' }}</div>
+            <div class="text-xs text-slate-500">{{ customer.tierKey || '-' }}</div>
+          </td>
+          <td class="px-4 py-3">
+            <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold capitalize text-slate-700">{{ customer.status }}</span>
+          </td>
+          <td class="px-4 py-3 text-slate-600">
+            <div class="space-y-1">
+              <span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold capitalize text-amber-700">
+                {{ customer.zohoSyncStatus === 'synced' ? 'Synced' : (customer.zohoSyncStatus === 'failed' ? 'Failed' : 'Pending') }}
+              </span>
+              <div class="text-xs text-slate-500" *ngIf="customer.zohoLastSyncedAt">
+                {{ customer.zohoLastSyncedAt | date:'medium' }}
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
+    <p>Page {{ pagination.page }} of {{ pagination.totalPages }} · {{ pagination.total }} records</p>
+    <div class="flex gap-2">
+      <button type="button" class="btn-secondary" (click)="goToPage(pagination.page - 1)" [disabled]="!pagination.hasPreviousPage">Previous</button>
+      <button type="button" class="btn-secondary" (click)="goToPage(pagination.page + 1)" [disabled]="!pagination.hasNextPage">Next</button>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,88 @@
+/* You can add global styles to this file, and also import other style files */
+@import "tailwindcss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  min-width: 0;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+@layer components {
+  .form-label {
+    @apply block text-sm font-medium text-gray-700 mb-1;
+  }
+  .form-input {
+    @apply w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm
+           focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none;
+  }
+  .form-input.ng-invalid.ng-touched {
+    @apply border-red-500 focus:border-red-500 focus:ring-red-500;
+  }
+  .form-select {
+    @apply w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm
+           focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none;
+  }
+  .form-error {
+    @apply text-xs text-red-600 mt-1;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium
+           transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1
+           disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium
+           transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1
+           disabled:opacity-50 disabled:cursor-not-allowed
+           bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium
+           transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1
+           disabled:opacity-50 disabled:cursor-not-allowed
+           bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-400;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium
+           transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1
+           disabled:opacity-50 disabled:cursor-not-allowed
+           bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+  }
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  white-space: normal;
+}
+
+@layer utilities {
+  .space-y-6 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.75rem !important; }
+  .space-y-5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.65rem !important; }
+  .space-y-4 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.55rem !important; }
+  .gap-6 { gap: 0.75rem !important; }
+  .gap-5 { gap: 0.6rem !important; }
+  .gap-4 { gap: 0.45rem !important; }
+  .p-6 { padding: 0.85rem !important; }
+  .p-5 { padding: 0.7rem !important; }
+  .p-4 { padding: 0.65rem !important; }
+  .py-8 { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+  .py-6 { padding-top: 0.9rem !important; padding-bottom: 0.9rem !important; }
+  .px-6 { padding-left: 0.85rem !important; padding-right: 0.85rem !important; }
+  .px-5 { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+  .mt-6 { margin-top: 1rem !important; }
+  .mb-6 { margin-bottom: 1rem !important; }
+  .text-3xl { font-size: 1.2rem !important; }
+  .text-2xl { font-size: 1.08rem !important; }
+  .text-xl { font-size: 1rem !important; }
+  .text-base { font-size: 0.88rem !important; }
+  .text-sm { font-size: 0.78rem !important; }
+  .text-xs { font-size: 0.72rem !important; }
+}

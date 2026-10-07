@@ -1,0 +1,457 @@
+<section class="dashboard-shell">
+
+  <!-- ── Header ───────────────────────────────────────────────────────────── -->
+  <div class="dashboard-header">
+    <div>
+      <p class="dashboard-eyebrow">Management Dashboard</p>
+      <h3 class="dashboard-title">Business performance at a glance</h3>
+      <p class="dashboard-subtitle">
+        Track enquiries, conversions, collections, and product demand from one operational view.
+      </p>
+    </div>
+    <div class="dashboard-actions">
+      <div class="dashboard-period-strip">
+        <button type="button" class="dashboard-period-pill" [class.dashboard-period-pill-active]="selectedPeriod === 'day'"   (click)="setPeriod('day')">Day</button>
+        <button type="button" class="dashboard-period-pill" [class.dashboard-period-pill-active]="selectedPeriod === 'week'"  (click)="setPeriod('week')">Week</button>
+        <button type="button" class="dashboard-period-pill" [class.dashboard-period-pill-active]="selectedPeriod === 'month'" (click)="setPeriod('month')">Month</button>
+        <button type="button" class="dashboard-period-pill" [class.dashboard-period-pill-active]="selectedPeriod === 'custom'"(click)="setPeriod('custom')">Custom</button>
+      </div>
+      <button type="button" class="btn-secondary px-3 py-1.5 text-xs" (click)="refreshSummary()" [disabled]="loading">
+        {{ loading ? 'Refreshing...' : 'Refresh' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Custom date range ─────────────────────────────────────────────────── -->
+  <div class="dashboard-filter-row">
+    <div class="dashboard-range-chip">{{ getRangeLabel() || 'Loading range...' }}</div>
+    <div *ngIf="selectedPeriod === 'custom'" class="dashboard-custom-range">
+      <label class="dashboard-date-field">
+        <span>From</span>
+        <input #fromInput type="date" [value]="customFrom" (change)="customFrom = fromInput.value" />
+      </label>
+      <label class="dashboard-date-field">
+        <span>To</span>
+        <input #toInput type="date" [value]="customTo" (change)="customTo = toInput.value" />
+      </label>
+      <button type="button" class="btn-primary px-3 py-1.5 text-xs" (click)="applyCustomRange()" [disabled]="loading">Apply</button>
+    </div>
+  </div>
+
+  <!-- ── Error ─────────────────────────────────────────────────────────────── -->
+  <div *ngIf="errorMessage" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+    {{ errorMessage }}
+  </div>
+
+  <!-- ── KPI strip ─────────────────────────────────────────────────────────── -->
+  <div class="dashboard-kpi-strip">
+    <div class="dashboard-kpi">
+      <span class="dashboard-kpi-label">Enquiries</span>
+      <strong>{{ formatMetric(dashboardSummary.businessSummary.customerEnquiries) }}</strong>
+    </div>
+    <div class="dashboard-kpi">
+      <span class="dashboard-kpi-label">Work Orders</span>
+      <strong>{{ formatMetric(dashboardSummary.businessSummary.workOrders) }}</strong>
+    </div>
+    <div class="dashboard-kpi">
+      <span class="dashboard-kpi-label">Quotes</span>
+      <strong>{{ formatMetric(dashboardSummary.businessSummary.quotes) }}</strong>
+    </div>
+    <div class="dashboard-kpi">
+      <span class="dashboard-kpi-label">Invoices</span>
+      <strong>{{ formatMetric(dashboardSummary.businessSummary.invoices) }}</strong>
+    </div>
+    <div class="dashboard-kpi">
+      <span class="dashboard-kpi-label">Payments</span>
+      <strong>{{ formatMetric(dashboardSummary.businessSummary.payments) }}</strong>
+    </div>
+    <div class="dashboard-kpi dashboard-kpi-highlight">
+      <span class="dashboard-kpi-label">Gross Sales</span>
+      <strong>{{ formatCurrency(dashboardSummary.businessSummary.grossSales) }}</strong>
+    </div>
+    <div class="dashboard-kpi dashboard-kpi-highlight">
+      <span class="dashboard-kpi-label">Collected</span>
+      <strong>{{ formatCurrency(dashboardSummary.businessSummary.collectedAmount) }}</strong>
+    </div>
+  </div>
+
+  <!-- ── SVG Trend Chart ───────────────────────────────────────────────────── -->
+  <article class="dashboard-card">
+    <div class="dashboard-card-head">
+      <div>
+        <p class="dashboard-card-kicker">Trend Chart</p>
+        <h4>Enquiries, work orders &amp; collections over time</h4>
+      </div>
+      <div class="dashboard-legend">
+        <span class="dashboard-legend-item"><i class="dashboard-legend-dot" style="background:#0f766e"></i>Enquiries</span>
+        <span class="dashboard-legend-item"><i class="dashboard-legend-dot" style="background:#2563eb"></i>Work Orders</span>
+        <span class="dashboard-legend-item"><i class="dashboard-legend-dot" style="background:#f59e0b;border-radius:2px"></i>Collections</span>
+      </div>
+    </div>
+
+    <ng-container *ngIf="svgChart as chart; else noTrendData">
+      <div class="dashboard-chart-wrap" style="position:relative">
+        <svg
+          class="dashboard-svg-chart"
+          [attr.viewBox]="chart.viewBox"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <!-- grid lines + y labels -->
+          <g *ngFor="let tick of chart.yTicks">
+            <line
+              [attr.x1]="chart.paddingLeft"
+              [attr.x2]="chart.paddingLeft + chart.plotWidth"
+              [attr.y1]="chart.paddingTop + chart.plotHeight - (tick / chart.yMax) * chart.plotHeight"
+              [attr.y2]="chart.paddingTop + chart.plotHeight - (tick / chart.yMax) * chart.plotHeight"
+              stroke="#e2e8f0" stroke-width="1"
+            />
+            <text
+              [attr.x]="chart.paddingLeft - 6"
+              [attr.y]="chart.paddingTop + chart.plotHeight - (tick / chart.yMax) * chart.plotHeight + 4"
+              text-anchor="end"
+              class="chart-axis-label"
+            >{{ tick }}</text>
+          </g>
+
+          <!-- x axis line -->
+          <line
+            [attr.x1]="chart.paddingLeft"
+            [attr.x2]="chart.paddingLeft + chart.plotWidth"
+            [attr.y1]="chart.paddingTop + chart.plotHeight"
+            [attr.y2]="chart.paddingTop + chart.plotHeight"
+            stroke="#cbd5e1" stroke-width="1.5"
+          />
+
+          <!-- collected amount bars -->
+          <g *ngFor="let bar of chart.collectedBars">
+            <rect
+              [attr.x]="bar.x"
+              [attr.y]="bar.y"
+              [attr.width]="bar.width"
+              [attr.height]="bar.height"
+              fill="#fcd34d"
+              fill-opacity="0.75"
+              rx="2"
+              (mouseenter)="showTooltip($event, [bar.label, 'Collections: ' + formatCurrency(bar.value)])"
+              (mouseleave)="hideTooltip()"
+              style="cursor:pointer"
+            />
+          </g>
+
+          <!-- enquiries line -->
+          <path
+            [attr.d]="chart.enquiriesPath"
+            fill="none"
+            stroke="#0f766e"
+            stroke-width="2.5"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+          />
+
+          <!-- work orders line -->
+          <path
+            [attr.d]="chart.workOrdersPath"
+            fill="none"
+            stroke="#2563eb"
+            stroke-width="2.5"
+            stroke-linejoin="round"
+            stroke-linecap="round"
+          />
+
+          <!-- enquiries dots -->
+          <g *ngFor="let pt of chart.enquiriesPoints; let i = index">
+            <circle
+              [attr.cx]="pt.x"
+              [attr.cy]="pt.y"
+              r="4"
+              fill="#0f766e"
+              stroke="#ffffff"
+              stroke-width="2"
+              (mouseenter)="showTooltip($event, [chart.xLabels[i], 'Enquiries: ' + formatMetric(pt.value)])"
+              (mouseleave)="hideTooltip()"
+              style="cursor:pointer"
+            />
+          </g>
+
+          <!-- work order dots -->
+          <g *ngFor="let pt of chart.workOrdersPoints; let i = index">
+            <circle
+              [attr.cx]="pt.x"
+              [attr.cy]="pt.y"
+              r="4"
+              fill="#2563eb"
+              stroke="#ffffff"
+              stroke-width="2"
+              (mouseenter)="showTooltip($event, [chart.xLabels[i], 'Work Orders: ' + formatMetric(pt.value)])"
+              (mouseleave)="hideTooltip()"
+              style="cursor:pointer"
+            />
+          </g>
+
+          <!-- x axis labels -->
+          <g *ngFor="let label of chart.xLabels; let i = index">
+            <text
+              [attr.x]="chart.paddingLeft + (chart.xLabels.length > 1 ? i * (chart.plotWidth / (chart.xLabels.length - 1)) : chart.plotWidth / 2)"
+              [attr.y]="chart.paddingTop + chart.plotHeight + 22"
+              text-anchor="middle"
+              class="chart-axis-label"
+            >{{ label }}</text>
+          </g>
+        </svg>
+
+        <!-- Tooltip -->
+        <div
+          *ngIf="activeTooltip"
+          class="chart-tooltip"
+          [style.left.px]="activeTooltip.x"
+          [style.top.px]="activeTooltip.y"
+        >
+          <div *ngFor="let line of activeTooltip.lines" class="chart-tooltip-line">{{ line }}</div>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-template #noTrendData>
+      <div class="dashboard-empty-state">No trend data available for the selected period.</div>
+    </ng-template>
+  </article>
+
+  <!-- ── Main grid ─────────────────────────────────────────────────────────── -->
+  <div class="dashboard-grid">
+
+    <!-- Quote Overview -->
+    <article class="dashboard-card dashboard-card-quotes">
+      <div class="dashboard-card-head">
+        <div>
+          <p class="dashboard-card-kicker">Quote Overview</p>
+          <h4>Quote counts &amp; value</h4>
+        </div>
+        <span class="dashboard-kpi-badge">{{ formatCurrency(dashboardSummary.quoteOverview.totalQuoteValue) }}</span>
+      </div>
+      <div class="dashboard-metric-grid">
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Total</span><strong>{{ formatMetric(dashboardSummary.quoteOverview.totalQuotes) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Draft</span><strong>{{ formatMetric(dashboardSummary.quoteOverview.draftQuotes) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Sent</span><strong>{{ formatMetric(dashboardSummary.quoteOverview.sentQuotes) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Accepted</span><strong class="text-green-700">{{ formatMetric(dashboardSummary.quoteOverview.acceptedQuotes) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Declined</span><strong class="text-red-600">{{ formatMetric(dashboardSummary.quoteOverview.declinedQuotes) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Expired</span><strong class="text-slate-500">{{ formatMetric(dashboardSummary.quoteOverview.expiredQuotes) }}</strong></div>
+      </div>
+    </article>
+
+    <!-- Invoice Overview -->
+    <article class="dashboard-card dashboard-card-invoices">
+      <div class="dashboard-card-head">
+        <div>
+          <p class="dashboard-card-kicker">Invoice Overview</p>
+          <h4>Invoice stage summary</h4>
+        </div>
+        <span class="dashboard-kpi-badge">{{ formatCurrency(dashboardSummary.invoiceOverview.totalInvoiceValue) }}</span>
+      </div>
+      <div class="dashboard-metric-grid">
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Total</span><strong>{{ formatMetric(dashboardSummary.invoiceOverview.totalInvoices) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Draft</span><strong>{{ formatMetric(dashboardSummary.invoiceOverview.draftInvoices) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Sent</span><strong>{{ formatMetric(dashboardSummary.invoiceOverview.sentInvoices) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Partially Paid</span><strong class="text-yellow-600">{{ formatMetric(dashboardSummary.invoiceOverview.partiallyPaidInvoices) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Paid</span><strong class="text-green-700">{{ formatMetric(dashboardSummary.invoiceOverview.paidInvoices) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Overdue</span><strong class="text-red-600">{{ formatMetric(dashboardSummary.invoiceOverview.overdueInvoices) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Void</span><strong class="text-slate-500">{{ formatMetric(dashboardSummary.invoiceOverview.voidInvoices) }}</strong></div>
+      </div>
+    </article>
+
+    <!-- Payment Overview -->
+    <article class="dashboard-card dashboard-card-payments">
+      <div class="dashboard-card-head">
+        <div>
+          <p class="dashboard-card-kicker">Payment Overview</p>
+          <h4>Receivables &amp; collections</h4>
+        </div>
+      </div>
+      <div class="dashboard-metric-grid">
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Total Payments</span><strong>{{ formatMetric(dashboardSummary.paymentOverview.totalPayments) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Success</span><strong class="text-green-700">{{ formatMetric(dashboardSummary.paymentOverview.successPayments) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Pending</span><strong class="text-yellow-600">{{ formatMetric(dashboardSummary.paymentOverview.pendingPayments) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Failed</span><strong class="text-red-600">{{ formatMetric(dashboardSummary.paymentOverview.failedPayments) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Collected</span><strong class="text-green-700">{{ formatCurrency(dashboardSummary.paymentOverview.collectedAmount) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Outstanding</span><strong class="text-red-600">{{ formatCurrency(dashboardSummary.paymentOverview.outstandingAmount) }}</strong></div>
+      </div>
+    </article>
+
+    <!-- Funnel Conversion (merged) -->
+    <article class="dashboard-card dashboard-card-funnel">
+      <div class="dashboard-card-head">
+        <div>
+          <p class="dashboard-card-kicker">Conversion Funnel</p>
+          <h4>Stage-by-stage conversion rates</h4>
+        </div>
+        <span class="dashboard-kpi-badge">{{ formatRate(dashboardSummary.enquiryConversion.conversionRate) }} overall</span>
+      </div>
+      <div class="dashboard-funnel">
+        <div *ngFor="let stage of funnelStages; let i = index" class="dashboard-funnel-stage">
+          <div class="dashboard-funnel-bar-wrap">
+            <div class="dashboard-funnel-bar" [style.background]="stage.color" [style.width]="'calc(100% - ' + (i * 10) + '%)' "></div>
+          </div>
+          <div class="dashboard-funnel-meta">
+            <span class="dashboard-funnel-label">{{ stage.label }}</span>
+            <span class="dashboard-funnel-rate" [style.color]="stage.color">{{ stage.rate }}</span>
+          </div>
+          <span class="dashboard-funnel-detail">{{ stage.value }}</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- Top Products with inline bar chart -->
+    <article class="dashboard-card dashboard-card-products">
+      <div class="dashboard-card-head">
+        <div>
+          <p class="dashboard-card-kicker">Top Ordered Products</p>
+          <h4>Demand from confirmed orders</h4>
+        </div>
+      </div>
+      <div class="dashboard-metric-grid" style="grid-template-columns: repeat(3,1fr); margin-bottom: 0.5rem">
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Qty Sold</span><strong>{{ formatMetric(dashboardSummary.orderInsights.totalItemQuantitySold) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Avg Order</span><strong>{{ formatCurrency(dashboardSummary.orderInsights.averageOrderValue) }}</strong></div>
+        <div class="dashboard-metric"><span class="dashboard-metric-label">Highest Order</span><strong>{{ formatCurrency(dashboardSummary.orderInsights.highestOrderValue) }}</strong></div>
+      </div>
+      <ng-container *ngIf="topOrderedProducts.length; else noProducts">
+        <div class="dashboard-product-list">
+          <div *ngFor="let product of topOrderedProducts; let i = index" class="dashboard-product-row">
+            <span class="dashboard-product-rank">{{ i + 1 }}</span>
+            <span class="dashboard-product-name">{{ product.name }}</span>
+            <div class="dashboard-product-bar-wrap">
+              <div class="dashboard-product-bar" [style.width.%]="(product.quantity / productChartMax) * 100"></div>
+            </div>
+            <strong class="dashboard-product-qty">{{ formatMetric(product.quantity) }}</strong>
+          </div>
+        </div>
+      </ng-container>
+      <ng-template #noProducts>
+        <div class="dashboard-empty-state">No ordered product data available yet.</div>
+      </ng-template>
+    </article>
+
+  </div>
+
+  <!-- ── Recent Activity ───────────────────────────────────────────────────── -->
+  <section class="dashboard-activity-section">
+    <div class="dashboard-section-head">
+      <p class="dashboard-card-kicker">Recent Activity</p>
+      <h4>Latest enquiries, quotes, invoices &amp; payments</h4>
+    </div>
+
+    <div class="dashboard-activity-grid">
+
+      <!-- Recent Enquiries -->
+      <article class="dashboard-card dashboard-card-activity">
+        <p class="dashboard-card-kicker">Recent Enquiries</p>
+        <h4 style="margin:0.2rem 0 0.75rem;font-size:0.95rem;font-weight:700;color:#0f172a">New customer requests</h4>
+        <ng-container *ngIf="dashboardSummary.recentActivity.enquiries.length; else noEnquiries">
+          <div class="dashboard-activity-table-wrap">
+            <table class="dashboard-activity-table">
+              <thead><tr><th>Customer</th><th>Stage</th><th>Date</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let e of dashboardSummary.recentActivity.enquiries">
+                  <td>
+                    <span class="dashboard-activity-label">{{ e.displayName }}</span>
+                    <span class="dashboard-activity-meta">{{ e.customerCode || 'No code' }}</span>
+                  </td>
+                  <td>
+                    <span class="dashboard-status-pill" [class.dashboard-status-pill-positive]="e.stage === 'converted'">{{ formatStatusLabel(e.stage) }}</span>
+                    <span class="dashboard-activity-meta">{{ e.workOrderNumber || formatStatusLabel(e.status) }}</span>
+                  </td>
+                  <td>{{ e.createdAt | date:'mediumDate' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+        <ng-template #noEnquiries><div class="dashboard-empty-state">No recent enquiries.</div></ng-template>
+      </article>
+
+      <!-- Recent Quotes -->
+      <article class="dashboard-card dashboard-card-activity">
+        <p class="dashboard-card-kicker">Recent Quotes</p>
+        <h4 style="margin:0.2rem 0 0.75rem;font-size:0.95rem;font-weight:700;color:#0f172a">Fresh pricing activity</h4>
+        <ng-container *ngIf="dashboardSummary.recentActivity.quotes.length; else noQuotes">
+          <div class="dashboard-activity-table-wrap">
+            <table class="dashboard-activity-table">
+              <thead><tr><th>Quote</th><th>Customer</th><th>Value</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let q of dashboardSummary.recentActivity.quotes">
+                  <td>
+                    <span class="dashboard-activity-label">{{ q.quoteNumber }}</span>
+                    <span class="dashboard-activity-meta">{{ (q.quoteDate || q.createdAt) | date:'mediumDate' }}</span>
+                  </td>
+                  <td>
+                    <span class="dashboard-activity-label">{{ q.customerDisplayName || 'Customer' }}</span>
+                    <span class="dashboard-activity-meta">{{ q.customerCode || 'No code' }}</span>
+                  </td>
+                  <td>{{ formatCurrency(q.grandTotal) }}</td>
+                  <td><span class="dashboard-status-pill">{{ formatStatusLabel(q.status) }}</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+        <ng-template #noQuotes><div class="dashboard-empty-state">No recent quotes.</div></ng-template>
+      </article>
+
+      <!-- Recent Invoices -->
+      <article class="dashboard-card dashboard-card-activity">
+        <p class="dashboard-card-kicker">Recent Invoices</p>
+        <h4 style="margin:0.2rem 0 0.75rem;font-size:0.95rem;font-weight:700;color:#0f172a">Billing progress</h4>
+        <ng-container *ngIf="dashboardSummary.recentActivity.invoices.length; else noInvoices">
+          <div class="dashboard-activity-table-wrap">
+            <table class="dashboard-activity-table">
+              <thead><tr><th>Invoice</th><th>Customer</th><th>Balance</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let inv of dashboardSummary.recentActivity.invoices">
+                  <td>
+                    <span class="dashboard-activity-label">{{ inv.invoiceNumber }}</span>
+                    <span class="dashboard-activity-meta">{{ inv.quoteNumberRef || 'Direct' }} · {{ (inv.invoiceDate || inv.createdAt) | date:'mediumDate' }}</span>
+                  </td>
+                  <td>
+                    <span class="dashboard-activity-label">{{ inv.customerDisplayName || 'Customer' }}</span>
+                    <span class="dashboard-activity-meta">{{ inv.customerCode || 'No code' }}</span>
+                  </td>
+                  <td>{{ formatCurrency(inv.balanceAmount) }}</td>
+                  <td><span class="dashboard-status-pill">{{ formatStatusLabel(inv.status) }}</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+        <ng-template #noInvoices><div class="dashboard-empty-state">No recent invoices.</div></ng-template>
+      </article>
+
+      <!-- Recent Payments -->
+      <article class="dashboard-card dashboard-card-activity">
+        <p class="dashboard-card-kicker">Recent Payments</p>
+        <h4 style="margin:0.2rem 0 0.75rem;font-size:0.95rem;font-weight:700;color:#0f172a">Latest collections</h4>
+        <ng-container *ngIf="dashboardSummary.recentActivity.payments.length; else noPayments">
+          <div class="dashboard-activity-table-wrap">
+            <table class="dashboard-activity-table">
+              <thead><tr><th>Payment</th><th>Invoice</th><th>Amount</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr *ngFor="let pay of dashboardSummary.recentActivity.payments">
+                  <td>
+                    <span class="dashboard-activity-label">{{ pay.paymentNumber }}</span>
+                    <span class="dashboard-activity-meta">{{ pay.customerDisplayName || 'Customer' }}{{ pay.customerCode ? ' (' + pay.customerCode + ')' : '' }}</span>
+                  </td>
+                  <td>
+                    <span class="dashboard-activity-label">{{ pay.invoiceNumberRef || 'No invoice' }}</span>
+                    <span class="dashboard-activity-meta">{{ (pay.paymentDate || pay.createdAt) | date:'mediumDate' }}</span>
+                  </td>
+                  <td>{{ formatCurrency(pay.amount) }}</td>
+                  <td><span class="dashboard-status-pill">{{ formatStatusLabel(pay.status) }}</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </ng-container>
+        <ng-template #noPayments><div class="dashboard-empty-state">No recent payments.</div></ng-template>
+      </article>
+
+    </div>
+  </section>
+
+</section>

@@ -1,0 +1,110 @@
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(15, 23, 42, 0.52);
+  backdrop-filter: blur(8px);
+}
+
+.dialog-panel {
+  width: min(100%, 28rem);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  padding: 1.4rem;
+  box-shadow: 0 28px 60px rgba(15, 23, 42, 0.25);
+}
+
+.dialog-copy {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.dialog-eyebrow {
+  margin: 0;
+  color: #0f766e;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.dialog-title {
+  margin: 0;
+  color: #0f172a;
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.dialog-message {
+  margin: 0;
+  color: #475569;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.dialog-actions {
+  margin-top: 1.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.dialog-button {
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #0891b2 0%, #155e75 100%);
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 700;
+  padding: 0.8rem 1.15rem;
+}
+
+.dialog-button:hover {
+  filter: brightness(1.03);
+}
+
+.dialog-button-secondary {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #334155;
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 700;
+  padding: 0.8rem 1.15rem;
+}
+
+.dialog-button-danger {
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 700;
+  padding: 0.8rem 1.15rem;
+}
+
+@media (max-width: 520px) {
+  .dialog-panel {
+    padding: 1.15rem;
+  }
+
+  .dialog-actions {
+    justify-content: stretch;
+  }
+
+  .dialog-button,
+  .dialog-button-secondary,
+  .dialog-button-danger {
+    width: 100%;
+  }
+}

@@ -1,0 +1,550 @@
+.dashboard-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────── */
+.dashboard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid #dbe2ea;
+  border-radius: 1.2rem;
+  background:
+    radial-gradient(circle at top left, rgba(34, 197, 94, 0.12), transparent 34%),
+    linear-gradient(135deg, #f8fafc 0%, #ffffff 52%, #eff6ff 100%);
+}
+
+.dashboard-eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.dashboard-title {
+  margin: 0.35rem 0 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dashboard-subtitle {
+  margin: 0.45rem 0 0;
+  max-width: 680px;
+  font-size: 0.86rem;
+  color: #475569;
+}
+
+.dashboard-actions {
+  display: grid;
+  gap: 0.65rem;
+  justify-items: end;
+}
+
+.dashboard-period-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  justify-content: flex-end;
+}
+
+.dashboard-period-pill {
+  padding: 0.42rem 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 9999px;
+  background: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.dashboard-period-pill:hover { border-color: #7dd3fc; background: #f0f9ff; }
+
+.dashboard-period-pill-active {
+  border-color: #0f766e;
+  background: #ccfbf1;
+  color: #115e59;
+}
+
+/* ── Filter row ──────────────────────────────────────────────────────── */
+.dashboard-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-range-chip {
+  padding: 0.55rem 0.9rem;
+  border: 1px solid #dbe2ea;
+  border-radius: 9999px;
+  background: #f8fafc;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.dashboard-custom-range {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-date-field {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.dashboard-date-field span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.dashboard-date-field input {
+  min-width: 148px;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  font-size: 0.82rem;
+  color: #0f172a;
+  outline: none;
+}
+
+.dashboard-date-field input:focus { border-color: #0369a1; }
+
+/* ── KPI strip ───────────────────────────────────────────────────────── */
+.dashboard-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.dashboard-kpi {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+}
+
+.dashboard-kpi-highlight {
+  background: linear-gradient(135deg, #f0fdf4, #ffffff);
+  border-color: #bbf7d0;
+}
+
+.dashboard-kpi-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.dashboard-kpi strong {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.dashboard-kpi-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.75rem;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  color: #334155;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ── Card base ───────────────────────────────────────────────────────── */
+.dashboard-card {
+  display: grid;
+  gap: 0.95rem;
+  padding: 1rem;
+  border: 1px solid #dbe2ea;
+  border-radius: 1.15rem;
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+}
+
+.dashboard-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dashboard-card-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.dashboard-card-head h4 {
+  margin: 0.22rem 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+/* Card accent backgrounds */
+.dashboard-card-quotes   { background: linear-gradient(145deg, rgba(168,85,247,0.07), #ffffff 40%); }
+.dashboard-card-invoices { background: linear-gradient(145deg, rgba(244,114,182,0.07), #ffffff 40%); }
+.dashboard-card-payments { background: linear-gradient(145deg, rgba(56,189,248,0.08), #ffffff 40%); }
+.dashboard-card-funnel   { background: linear-gradient(145deg, rgba(249,115,22,0.07), #ffffff 40%); }
+.dashboard-card-products { background: linear-gradient(145deg, rgba(251,191,36,0.1), #ffffff 40%); }
+.dashboard-card-activity { background: linear-gradient(145deg, rgba(15,118,110,0.05), #ffffff 42%); }
+
+/* ── Main grid ───────────────────────────────────────────────────────── */
+.dashboard-grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* ── Metric grid ─────────────────────────────────────────────────────── */
+.dashboard-metric-grid {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dashboard-metric {
+  display: grid;
+  gap: 0.18rem;
+  padding: 0.72rem 0.8rem;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.dashboard-metric-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #64748b;
+}
+
+.dashboard-metric strong {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+/* ── SVG chart ───────────────────────────────────────────────────────── */
+.dashboard-chart-wrap {
+  overflow-x: auto;
+}
+
+.dashboard-svg-chart {
+  width: 100%;
+  min-width: 480px;
+  display: block;
+  overflow: visible;
+}
+
+.chart-axis-label {
+  font-size: 10px;
+  fill: #94a3b8;
+  font-family: inherit;
+}
+
+.dashboard-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  align-items: center;
+}
+
+.dashboard-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #475569;
+}
+
+.dashboard-legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+/* Tooltip */
+.chart-tooltip {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.6rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+  z-index: 20;
+}
+
+.chart-tooltip-line { line-height: 1.6; }
+.chart-tooltip-line:first-child { font-weight: 800; color: #7dd3fc; }
+
+/* ── Funnel ──────────────────────────────────────────────────────────── */
+.dashboard-funnel {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.dashboard-funnel-stage {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.dashboard-funnel-bar-wrap {
+  height: 10px;
+  background: #f1f5f9;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.dashboard-funnel-bar {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.5s ease;
+  opacity: 0.85;
+}
+
+.dashboard-funnel-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.dashboard-funnel-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.dashboard-funnel-rate {
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.dashboard-funnel-detail {
+  font-size: 0.72rem;
+  color: #94a3b8;
+}
+
+/* ── Product bars ────────────────────────────────────────────────────── */
+.dashboard-product-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.dashboard-product-row {
+  display: grid;
+  grid-template-columns: 1.4rem 1fr auto auto;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.dashboard-product-rank {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #94a3b8;
+  text-align: right;
+}
+
+.dashboard-product-name {
+  font-size: 0.82rem;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dashboard-product-bar-wrap {
+  width: 100px;
+  height: 8px;
+  background: #f1f5f9;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.dashboard-product-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #fcd34d, #f59e0b);
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.dashboard-product-qty {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #0f172a;
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+/* ── Activity section ────────────────────────────────────────────────── */
+.dashboard-section-head {
+  margin-bottom: 0.1rem;
+}
+
+.dashboard-section-head h4 {
+  margin: 0.22rem 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dashboard-activity-section {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.dashboard-activity-grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-activity-table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 0.9rem;
+  background: rgba(248, 250, 252, 0.85);
+}
+
+.dashboard-activity-table {
+  width: 100%;
+  min-width: 480px;
+  border-collapse: collapse;
+}
+
+.dashboard-activity-table th,
+.dashboard-activity-table td {
+  padding: 0.72rem 0.85rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  color: #334155;
+  font-size: 0.82rem;
+}
+
+.dashboard-activity-table th {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.dashboard-activity-table tbody tr:last-child td { border-bottom: none; }
+
+.dashboard-activity-label {
+  display: block;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dashboard-activity-meta {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+/* ── Status pills ────────────────────────────────────────────────────── */
+.dashboard-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.dashboard-status-pill-positive {
+  background: #ccfbf1;
+  color: #115e59;
+}
+
+/* ── Empty state ─────────────────────────────────────────────────────── */
+.dashboard-empty-state {
+  padding: 0.85rem;
+  border: 1px dashed #cbd5e1;
+  border-radius: 0.9rem;
+  background: #f8fafc;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 1200px) {
+  .dashboard-kpi-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-grid,
+  .dashboard-activity-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-kpi-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-header {
+    flex-direction: column;
+  }
+
+  .dashboard-actions {
+    justify-items: stretch;
+    width: 100%;
+  }
+
+  .dashboard-period-strip {
+    justify-content: flex-start;
+  }
+
+  .dashboard-kpi-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dashboard-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

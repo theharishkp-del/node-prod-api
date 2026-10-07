@@ -1,0 +1,41 @@
+import { buildStandardEOResponse as buildStandardEOResponseBase } from '../standardEO.js';
+
+export function buildStandardEOResponse({
+  resultCode,
+  resultText,
+  reqMessageObj = {},
+  resMessageObj = {},
+  eoState = 'stop',
+  fileName = '',
+  fileNameFolder = '',
+  description = '',
+  thumbFileNameFolder = '',
+  thumpNailName = '',
+  orderReferenceNumber = null,
+  workOrderId = null,
+  quoteLink = null,
+  invoiceNumber = null,
+  invoiceUrl = null,
+  paymentLinkId = null,
+  paymentLink = null,
+}) {
+  return buildStandardEOResponseBase({
+    resultCode,
+    resultText,
+    reqMessageObj,
+    resMessageObj,
+    eoState,
+    fileName,
+    fileNameFolder,
+    description,
+    thumbFileNameFolder,
+    thumpNailName,
+    orderReferenceNumber,
+    workOrderId,
+    quoteLink,
+    invoiceNumber,
+    invoiceUrl,
+    paymentLinkId,
+    paymentLink,
+  });
+}

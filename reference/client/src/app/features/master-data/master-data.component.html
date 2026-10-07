@@ -1,0 +1,28 @@
+<section class="space-y-5 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
+  <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+    <div>
+      <p class="text-sm font-semibold uppercase tracking-[0.18em] text-cyan-700">Master Data</p>
+      <h2 class="mt-2 text-xl font-semibold text-slate-900">Business master records</h2>
+    </div>
+  </div>
+
+  <div class="master-tab-strip">
+    <button
+      *ngFor="let tab of tabs"
+      type="button"
+      [class]="getTabClass(tab)"
+      (click)="setActiveTab(tab.key)"
+    >
+      <span class="master-tab-label">{{ tab.label }}</span>
+    </button>
+  </div>
+
+  <app-sync-dashboard *ngIf="activeTab() === 'sync'" />
+  <app-sync-dashboard *ngIf="activeTab() === 'settings'" viewMode="settings" />
+  <app-tier-list *ngIf="activeTab() === 'tier'" />
+  <app-work-order-list *ngIf="activeTab() === 'work-order'" />
+  <app-customer-list *ngIf="activeTab() === 'customer'" />
+  <app-quote-list *ngIf="activeTab() === 'quote'" />
+  <app-invoice-list *ngIf="activeTab() === 'invoice'" />
+  <app-payment-list *ngIf="activeTab() === 'payment'" />
+</section>

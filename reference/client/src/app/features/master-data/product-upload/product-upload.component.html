@@ -1,0 +1,293 @@
+<section class="upload-shell">
+  <div class="upload-card">
+    <div class="upload-header">
+      <h3 class="text-base font-semibold text-slate-900">Inventory Upload</h3>
+      <div class="upload-top-actions">
+        <button type="button" class="btn-secondary px-3 py-1.5 text-xs" [disabled]="downloadingTemplate" (click)="downloadTemplate()">
+          {{ downloadingTemplate ? 'Preparing Template...' : 'Download Template' }}
+        </button>
+        <button type="button" class="btn-primary px-3 py-1.5 text-xs" (click)="openCreate()">Add Product</button>
+      </div>
+    </div>
+
+    <div class="upload-layout">
+      <div class="upload-main">
+        <div class="upload-picker-row">
+          <label class="upload-dropzone" for="inventory-upload">
+            <input
+              #fileInput
+              id="inventory-upload"
+              type="file"
+              class="upload-input"
+              accept=".xlsx,.xls,.csv"
+              (change)="onFileSelected($event)"
+            />
+            <span class="upload-label">Choose inventory file</span>
+            <span class="upload-hint">Accepted formats: .xlsx, .xls, .csv</span>
+            <span class="upload-hint">Template columns include SKU, Item Name, Category, Width, Height, Depth, Price, Stock, and more.</span>
+          </label>
+        </div>
+
+        <div class="upload-file-note">
+          <span class="upload-file-note-name">{{ selectedFileName }}</span>
+          <span *ngIf="selectedFile" class="upload-file-note-size">· {{ selectedFileSizeLabel }}</span>
+        </div>
+
+        <div class="upload-mode-grid">
+          <div>
+            <label class="form-label">Import Mode</label>
+            <select class="form-select" [(ngModel)]="importMode">
+              <option value="merge">Merge: insert new and update matching SKU</option>
+              <option value="replace">Replace: import file and retire missing SKU</option>
+            </select>
+          </div>
+        </div>
+
+        <div *ngIf="successMessage" class="upload-alert upload-alert-success">
+          {{ successMessage }}
+        </div>
+
+        <div *ngIf="errorMessage" class="upload-alert upload-alert-error">
+          {{ errorMessage }}
+        </div>
+
+        <div class="upload-actions">
+          <button
+            type="button"
+            class="btn-secondary px-3 py-1.5 text-xs"
+            [disabled]="uploading || !selectedFile"
+            (click)="clearSelection(fileInput)"
+          >
+            Clear
+          </button>
+
+          <button
+            type="button"
+            class="btn-primary px-3 py-1.5 text-xs"
+            [disabled]="uploading || !selectedFile"
+            (click)="uploadFile(fileInput)"
+          >
+            {{ uploading ? 'Uploading...' : 'Upload And Import' }}
+          </button>
+        </div>
+      </div>
+
+      <aside class="upload-sidebar">
+        <div class="upload-stats">
+          <div class="upload-stat-card">
+            <span class="upload-stat-label">Total</span>
+            <span class="upload-stat-value">{{ totalProducts }}</span>
+          </div>
+          <div class="upload-stat-card upload-stat-card-active">
+            <span class="upload-stat-label">Active</span>
+            <span class="upload-stat-value">{{ activeProducts }}</span>
+          </div>
+          <div class="upload-stat-card upload-stat-card-muted">
+            <span class="upload-stat-label">Inactive</span>
+            <span class="upload-stat-value">{{ inactiveProducts }}</span>
+          </div>
+        </div>
+
+        <div class="upload-meta-card upload-meta-card-compact" *ngIf="summary?.lastImportedAt; else noImportYet">
+          <p class="upload-meta-label">Last Import</p>
+          <p class="upload-meta-value">{{ summary?.lastImportedAt | date:'medium' }}</p>
+          <div class="upload-meta-row">
+            <span class="upload-meta-copy" *ngIf="summary?.lastSourceFileName">File: {{ summary?.lastSourceFileName }}</span>
+            <span class="upload-meta-copy" *ngIf="summary?.lastImportMode">Mode: {{ getImportModeLabel(summary!.lastImportMode!) }}</span>
+          </div>
+        </div>
+        <ng-template #noImportYet>
+          <div class="upload-meta-card upload-meta-card-compact">
+            <p class="upload-meta-label">Last Import</p>
+            <p class="upload-meta-copy">No imports yet for this tenant.</p>
+          </div>
+        </ng-template>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Recent Import History -->
+  <section class="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+    <div>
+      <h3 class="text-base font-semibold text-slate-900">Recent Import History</h3>
+      <p class="mt-1 text-sm text-slate-600">Each upload batch is versioned so you can track what was merged or replaced.</p>
+    </div>
+
+    <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+      <table class="min-w-full divide-y divide-slate-200 text-sm">
+        <thead class="bg-slate-100 text-left text-slate-700">
+          <tr>
+            <th class="px-4 py-3 font-semibold">Imported At</th>
+            <th class="px-4 py-3 font-semibold">File</th>
+            <th class="px-4 py-3 font-semibold">Mode</th>
+            <th class="px-4 py-3 font-semibold">Imported</th>
+            <th class="px-4 py-3 font-semibold">Skipped</th>
+            <th class="px-4 py-3 font-semibold">Failed</th>
+            <th class="px-4 py-3 font-semibold">Retired</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <tr *ngIf="!importHistory.length">
+            <td colspan="7" class="px-4 py-8 text-center text-slate-500">No import history yet.</td>
+          </tr>
+          <tr *ngFor="let historyItem of importHistory">
+            <td class="px-4 py-3 text-slate-600">{{ historyItem.createdAt | date:'medium' }}</td>
+            <td class="px-4 py-3">
+              <div class="font-semibold text-slate-900">{{ historyItem.sourceFileName }}</div>
+              <div class="text-xs text-slate-500">{{ historyItem.importBatchId }}</div>
+            </td>
+            <td class="px-4 py-3 text-slate-600">{{ getImportModeLabel(historyItem.mode) }}</td>
+            <td class="px-4 py-3 text-slate-600">{{ historyItem.importedCount }}</td>
+            <td class="px-4 py-3 text-slate-600">{{ historyItem.skippedCount }}</td>
+            <td class="px-4 py-3 text-slate-600">{{ historyItem.failedCount }}</td>
+            <td class="px-4 py-3 text-slate-600">
+              <div>{{ historyItem.retiredCount || 0 }}</div>
+              <div *ngIf="historyItem.inferredDimensionCount" class="text-xs text-amber-600">
+                {{ historyItem.inferredDimensionCount }} inferred
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Inventory Products -->
+  <section class="space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+    <div class="flex flex-col gap-2 xl:flex-row xl:items-end xl:justify-between">
+      <div>
+        <h3 class="text-base font-semibold text-slate-900">Inventory Products</h3>
+        <p class="mt-1 text-sm text-slate-600">Review imported records, upload product images, edit individual items, or add products manually.</p>
+      </div>
+    </div>
+
+    <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem_14rem_auto]">
+      <input class="form-input" [(ngModel)]="searchTerm" placeholder="Search by SKU, item name, category, style" />
+      <select class="form-select" [(ngModel)]="statusFilter">
+        <option value="">All Statuses</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+      </select>
+      <select class="form-select" [(ngModel)]="categoryFilter">
+        <option value="">All Categories</option>
+        <option *ngFor="let category of categories" [value]="category">{{ category }}</option>
+      </select>
+      <button type="button" class="btn-secondary" (click)="onSearch()">Search</button>
+    </div>
+
+    <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white" style="overflow: visible;">
+      <table class="min-w-full divide-y divide-slate-200 text-sm" style="overflow: visible;">
+        <thead class="bg-slate-100 text-left text-slate-700">
+          <tr>
+            <th class="px-4 py-3 font-semibold">S.No</th>
+            <th class="px-4 py-3 font-semibold">Image</th>
+            <th class="px-4 py-3 font-semibold">Product</th>
+            <th class="px-4 py-3 font-semibold">Category</th>
+            <th class="px-4 py-3 font-semibold">Price</th>
+            <th class="px-4 py-3 font-semibold">Stock</th>
+            <th class="px-4 py-3 font-semibold">Status</th>
+            <th class="px-4 py-3 font-semibold text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <tr *ngIf="loading">
+            <td colspan="8" class="px-4 py-8 text-center text-slate-500">Loading products...</td>
+          </tr>
+          <tr *ngIf="!loading && !hasProducts">
+            <td colspan="8" class="px-4 py-8 text-center text-slate-500">No products found for the current filter.</td>
+          </tr>
+          <tr *ngFor="let product of products; let index = index; trackBy: trackByProductId">
+            <td class="px-4 py-3 text-slate-500">{{ getRowNumber(index) }}</td>
+
+            <!-- Image cell -->
+            <td class="px-4 py-3" style="overflow: visible; position: relative;">
+              <label class="product-img-cell" [title]="imageUploadingId === product.id ? 'Uploading…' : 'Click to upload image'">
+                <!-- Hidden file input -->
+                <input
+                  type="file"
+                  class="upload-input"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  [disabled]="!!imageUploadingId"
+                  (change)="onImageSelected($event, product)"
+                />
+                <!-- Show image or skeleton -->
+                <ng-container *ngIf="product.imageUrl; else imgSkeleton">
+                  <div class="product-img-hover-wrap">
+                    <!-- thumbnail -->
+                    <img [src]="product.imageUrl" [alt]="product.sku" />
+                    <!-- large hover preview -->
+                    <img [src]="product.imageUrl" [alt]="product.sku" class="product-img-preview" />
+                    <!-- uploading spinner overlay -->
+                    <div *ngIf="imageUploadingId === product.id" class="product-img-overlay">
+                      <span class="product-img-spinner"></span>
+                    </div>
+                  </div>
+                </ng-container>
+                <ng-template #imgSkeleton>
+                  <div class="product-img-skeleton">
+                    <ng-container *ngIf="imageUploadingId === product.id; else cameraIcon">
+                      <span class="product-img-spinner"></span>
+                    </ng-container>
+                    <ng-template #cameraIcon>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 5.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 0 0-1.134-.175 2.31 2.31 0 0 1-1.64-1.055l-.822-1.316a2.192 2.192 0 0 0-1.736-1.039 48.774 48.774 0 0 0-5.232 0 2.192 2.192 0 0 0-1.736 1.039l-.821 1.316Z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0ZM18.75 10.5h.008v.008h-.008V10.5Z" />
+                      </svg>
+                    </ng-template>
+                  </div>
+                </ng-template>
+              </label>
+            </td>
+
+            <td class="px-4 py-3">
+              <div class="font-semibold text-slate-900">{{ product.itemName }}</div>
+              <div class="text-xs text-slate-500">{{ product.sku }}</div>
+            </td>
+            <td class="px-4 py-3 text-slate-600">
+              <div>{{ product.category }}</div>
+              <div class="text-xs text-slate-500">{{ product.finish || product.style || 'No finish/style' }}</div>
+            </td>
+            <td class="px-4 py-3 text-slate-600">
+              <div>${{ (product.salesPrice ?? 0).toFixed(2) }}</div>
+              <div class="text-xs text-slate-500">Cost: ${{ (product.purchasePrice ?? 0).toFixed(2) }}</div>
+            </td>
+            <td class="px-4 py-3 text-slate-600">
+              <div>{{ product.qtyAvailable ?? 0 }} {{ product.unit || 'each' }}</div>
+              <div class="text-xs text-slate-500">Lead time: {{ product.leadTimeDays ?? 0 }} days</div>
+            </td>
+            <td class="px-4 py-3">
+              <span [class]="getStatusBadgeClass(product)">{{ product.isActive ? 'Active' : 'Inactive' }}</span>
+            </td>
+            <td class="px-4 py-3">
+              <div class="flex flex-wrap justify-end gap-2">
+                <button type="button" class="btn-secondary" (click)="openView(product)">View</button>
+                <button type="button" class="btn-secondary" (click)="openEdit(product)">Edit</button>
+                <button type="button" class="btn-danger" (click)="onDelete(product)" [disabled]="deletingId === product.id">
+                  {{ deletingId === product.id ? 'Deleting...' : 'Delete' }}
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600">
+      <p>Page {{ pagination.page }} of {{ pagination.totalPages }} · {{ pagination.total }} records</p>
+      <div class="flex gap-2">
+        <button type="button" class="btn-secondary px-3 py-1.5 text-xs" (click)="goToPage(pagination.page - 1)" [disabled]="!pagination.hasPreviousPage">Previous</button>
+        <button type="button" class="btn-primary px-3 py-1.5 text-xs" (click)="goToPage(pagination.page + 1)" [disabled]="!pagination.hasNextPage">Next</button>
+      </div>
+    </div>
+  </section>
+</section>
+
+<app-product-upload-form
+  *ngIf="formOpen"
+  [mode]="formMode"
+  [product]="selectedProduct"
+  [saving]="saving"
+  [errorMessage]="formErrorMessage"
+  (cancelRequested)="closeForm()"
+  (saveRequested)="onSave($event)"
+/>

@@ -1,0 +1,29 @@
+<section class="success-page">
+  <article class="success-card">
+    <p class="success-kicker">
+      {{ onboardingState.completionState()?.operation === 'updated' ? 'Company Update Complete' : 'Company Registration Complete' }}
+    </p>
+    <h2 class="success-title">
+      {{ onboardingState.completionState()?.operation === 'updated' ? 'Company details updated successfully' : 'Company registered successfully' }}
+    </h2>
+    <p class="success-copy">Your provisioning was completed successfully. You can go back to the bot now.</p>
+
+    <div class="message-panel" *ngIf="onboardingState.companyDetails() as company; else missingSummary">
+      <p><strong>Company Details:</strong> {{ company.companyName }}, {{ company.businessEmail || '-' }}, {{ company.countryCode }} {{ company.phoneNumber || '-' }}, {{ company.currency }}, {{ company.address.formattedAddress }}, {{ company.website || '-' }}</p>
+      <p><strong>Branch Details:</strong> {{ onboardingState.branches()?.length || 0 }} branch(es) added.</p>
+      <p><strong>User Details:</strong> {{ onboardingState.cybotUsers()?.length || 0 }} user(s) added.</p>
+    </div>
+
+    <ng-template #missingSummary>
+      <div class="message-panel">
+        <p>The onboarding summary is not available.</p>
+      </div>
+    </ng-template>
+
+    <p *ngIf="closeBlockedMessage" class="close-note">{{ closeBlockedMessage }}</p>
+
+    <div class="success-actions">
+      <button type="button" class="btn-primary" (click)="backToBot()">Go Back To Bot</button>
+    </div>
+  </article>
+</section>

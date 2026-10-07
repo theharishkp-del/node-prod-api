@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/shared/country-code-select/country-code-select.css"],
+  "sourcesContent": [".relative {\r\n  position: relative;\r\n}\r\n\r\nbutton[type=\"button\"] {\r\n  padding: 0.55rem 0.75rem;\r\n  font-size: 0.85rem;\r\n}\r\n\r\ninput.form-input {\r\n  padding: 0.55rem 0.75rem;\r\n  font-size: 0.88rem;\r\n}\r\n\r\n.absolute {\r\n  position: absolute;\r\n}\r\n\r\n.max-h-80 {\r\n  max-height: 18rem;\r\n}\r\n\r\n.shadow-xl {\r\n  box-shadow: 0 15px 30px rgba(15, 23, 42, 0.12);\r\n}\r\n\r\n.rounded-xl {\r\n  border-radius: 0.75rem;\r\n}\r\n\r\n.p-2 {\r\n  padding: 0.5rem;\r\n}\r\n\r\n.px-3 {\r\n  padding-left: 0.75rem;\r\n  padding-right: 0.75rem;\r\n}\r\n\r\n.py-2 {\r\n  padding-top: 0.5rem;\r\n  padding-bottom: 0.5rem;\r\n}\r\n\r\n.text-sm {\r\n  font-size: 0.82rem;\r\n}\r\n\r\n.text-xs {\r\n  font-size: 0.7rem;\r\n}\r\n\r\n.rounded-lg {\r\n  border-radius: 0.75rem;\r\n}\r\n"],
+  "mappings": ";AAAA,CAAA;AACE,YAAA;AACF;AAEA,MAAA,CAAA;AACE,WAAA,QAAA;AACA,aAAA;AACF;AAEA,KAAA,CAAA;AACE,WAAA,QAAA;AACA,aAAA;AACF;AAEA,CAAA;AACE,YAAA;AACF;AAEA,CAAA;AACE,cAAA;AACF;AAEA,CAAA;AACE,cAAA,EAAA,KAAA,KAAA,KAAA,EAAA,EAAA,EAAA,EAAA,EAAA,EAAA;AACF;AAEA,CAAA;AACE,iBAAA;AACF;AAEA,CAAA;AACE,WAAA;AACF;AAEA,CAAA;AACE,gBAAA;AACA,iBAAA;AACF;AAEA,CAAA;AACE,eAAA;AACA,kBAAA;AACF;AAEA,CAAA;AACE,aAAA;AACF;AAEA,CAAA;AACE,aAAA;AACF;AAEA,CAAA;AACE,iBAAA;AACF;",
+  "names": []
+}

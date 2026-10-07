@@ -1,0 +1,437 @@
+<section class="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+  <div class="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+    <div>
+      <h3 class="text-base font-semibold text-slate-900">Developer monitor</h3>
+      <p class="mt-1 text-sm text-slate-600">
+        Use the developer key to inspect the master database, select any tenant, and review that tenant database collections.
+      </p>
+    </div>
+
+    <div class="developer-toolbar">
+      <label class="developer-filter-field developer-filter-field-search">
+        <span>Developer key</span>
+        <input [(ngModel)]="developerKey" class="developer-input" type="password" autocomplete="off" placeholder="DEVELOPER_MONITOR_KEY" />
+      </label>
+
+      <label class="developer-filter-field developer-filter-field-search" *ngIf="overview">
+        <span>Tenant</span>
+        <select [(ngModel)]="selectedTenantId" class="developer-input" (change)="loadOverview()">
+          <option *ngFor="let tenant of overview.tenants" [value]="tenant.tenantId">
+            {{ tenant.companyName }} ({{ tenant.tenantId }})
+          </option>
+        </select>
+      </label>
+
+      <button type="button" class="btn-primary px-3 py-1.5 text-xs" (click)="loadOverview()" [disabled]="loadingOverview">
+        {{ loadingOverview ? 'Loading...' : (overview ? 'Refresh All' : 'Connect') }}
+      </button>
+
+    </div>
+  </div>
+
+  <div *ngIf="overviewErrorMessage" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+    {{ overviewErrorMessage }}
+  </div>
+  <div *ngIf="logsErrorMessage" class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+    {{ logsErrorMessage }}
+  </div>
+  <div *ngIf="previewErrorMessage" class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+    {{ previewErrorMessage }}
+  </div>
+  <div *ngIf="deleteErrorMessage" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+    {{ deleteErrorMessage }}
+  </div>
+  <div *ngIf="deleteSuccessMessage" class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+    {{ deleteSuccessMessage }}
+  </div>
+  <div *ngIf="crudErrorMessage" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+    {{ crudErrorMessage }}
+  </div>
+  <div *ngIf="crudSuccessMessage" class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+    {{ crudSuccessMessage }}
+  </div>
+
+  <nav class="developer-menu" *ngIf="overview">
+    <button type="button" [class.developer-menu-active]="activeMenu === 'database'" (click)="activeMenu = 'database'">
+      Database Explorer
+    </button>
+    <button type="button" [class.developer-menu-active]="activeMenu === 'logs'" (click)="showLogs()">
+      Logs & Errors
+    </button>
+    <button *ngIf="developerKey.trim()" type="button" [class.developer-menu-active]="activeMenu === 'trial'" (click)="openTrialBotManagement()">
+      Trial Bot Management
+    </button>
+  </nav>
+
+  <section *ngIf="activeMenu === 'database' && overview">
+    <div class="developer-summary-grid" *ngIf="overview as currentOverview">
+    <article class="developer-summary-card">
+      <span class="developer-summary-label">Tenant context</span>
+      <strong class="developer-summary-value">{{ currentOverview.tenantContext.tenantName || currentOverview.tenantContext.tenantId || 'Active tenant' }}</strong>
+      <span class="developer-summary-note">Bot user: {{ currentOverview.tenantContext.botUserId || 'N/A' }}</span>
+      <span class="developer-summary-note">Tenant DB: {{ currentOverview.tenantDatabase.name }}</span>
+    </article>
+
+    <article class="developer-summary-card">
+      <span class="developer-summary-label">Master database</span>
+      <strong class="developer-summary-value">{{ currentOverview.masterDatabase.collectionCount }}</strong>
+      <span class="developer-summary-note">Collections in {{ currentOverview.masterDatabase.name }}</span>
+      <span class="developer-summary-note">{{ currentOverview.masterDatabase.totalDocuments }} total documents</span>
+    </article>
+
+    <article class="developer-summary-card">
+      <span class="developer-summary-label">Tenant database</span>
+      <strong class="developer-summary-value">{{ currentOverview.tenantDatabase.collectionCount }}</strong>
+      <span class="developer-summary-note">Collections in {{ currentOverview.tenantDatabase.name }}</span>
+      <span class="developer-summary-note">{{ currentOverview.tenantDatabase.totalDocuments }} total documents</span>
+    </article>
+
+    <article class="developer-summary-card">
+      <span class="developer-summary-label">Log entries</span>
+      <strong class="developer-summary-value">{{ currentOverview.logConfig.availableCount }}</strong>
+      <span class="developer-summary-note">Showing {{ currentOverview.logConfig.returnedCount }} entries for {{ currentOverview.logConfig.activeDate }}</span>
+      <span class="developer-summary-note">Source: {{ getLogSourceLabel(currentOverview.logConfig.source) }}</span>
+      <span class="developer-summary-note">Refreshed {{ lastRefreshedAt | date:'medium' }}</span>
+    </article>
+  </div>
+
+    <div class="developer-request-summary" *ngIf="requestTimeline.length">
+      <div class="developer-request-header">
+        <div>
+          <h4 class="developer-panel-title">Live request timeline</h4>
+          <p class="developer-panel-copy">Most recent request traces from the selected log window.</p>
+        </div>
+        <label class="developer-filter-field developer-filter-field-search">
+          <span>Request filter</span>
+          <input [(ngModel)]="requestTraceFilter" class="developer-input" type="text" placeholder="requestId, tenant, error, route" />
+        </label>
+      </div>
+
+      <div class="developer-request-grid">
+        <button
+          *ngFor="let request of requestTimeline; trackBy: trackByRequestId"
+          type="button"
+          class="developer-request-card"
+          [class.developer-request-card-selected]="selectedRequestId === request.requestId"
+          (click)="showRequestTrace(request.requestId)"
+        >
+          <div class="developer-request-meta-row">
+            <span class="developer-log-level" [class.developer-log-level-error]="request.latestLevel === 'ERROR'" [class.developer-log-level-warn]="request.latestLevel === 'WARN'" [class.developer-log-level-http]="request.latestLevel === 'HTTP'" [class.developer-log-level-info]="request.latestLevel !== 'ERROR' && request.latestLevel !== 'WARN' && request.latestLevel !== 'HTTP'">{{ request.latestLevel }}</span>
+            <span class="developer-request-method">{{ request.method }}</span>
+            <span class="developer-request-id">{{ request.requestId }}</span>
+          </div>
+          <div class="developer-request-body">
+            <strong>{{ request.url }}</strong>
+            <span>{{ request.latestMessage }}</span>
+          </div>
+          <div class="developer-request-stats">
+            <span>Status: {{ request.statusCode ?? 'n/a' }}</span>
+            <span>Duration: {{ request.durationMs ?? 'n/a' }}ms</span>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div *ngIf="selectedRequestTrace" class="developer-request-trace-panel">
+      <div class="developer-panel-header">
+        <div>
+          <h4 class="developer-panel-title">Request trace</h4>
+          <p class="developer-panel-copy">{{ selectedRequestTrace.requestId }}</p>
+        </div>
+        <button type="button" class="btn-secondary px-3 py-1.5 text-xs" (click)="clearRequestFilter()">Clear</button>
+      </div>
+
+      <section class="developer-create-collection">
+        <div>
+          <h5>Create collection</h5>
+          <p>Create a collection in Master or Tenant. MongoDB creates the database automatically if it does not exist.</p>
+        </div>
+        <select [(ngModel)]="createCollectionScope" class="developer-input" aria-label="Collection database scope">
+          <option value="tenant">Tenant database</option>
+          <option value="master">Master database</option>
+        </select>
+        <input [(ngModel)]="newCollectionName" class="developer-input" type="text" placeholder="New collection name" (keyup.enter)="createCollection()" />
+        <button type="button" class="btn-primary px-3 py-1.5 text-xs" (click)="createCollection()" [disabled]="creatingCollection">
+          {{ creatingCollection ? 'Creating...' : 'Create' }}
+        </button>
+      </section>
+
+      <div class="developer-request-trace-summary">
+        <span><strong>Method:</strong> {{ selectedRequestTrace.method }}</span>
+        <span><strong>URL:</strong> {{ selectedRequestTrace.url }}</span>
+        <span><strong>Status:</strong> {{ selectedRequestTrace.statusCode ?? 'n/a' }}</span>
+        <span><strong>Duration:</strong> {{ selectedRequestTrace.durationMs ?? 'n/a' }}ms</span>
+      </div>
+
+      <div class="developer-trace-steps">
+        <div *ngFor="let step of selectedRequestTrace.steps; let index = index" class="developer-trace-step">
+          <div class="developer-trace-step-index">{{ index + 1 }}</div>
+          <div class="developer-trace-step-content">
+            <strong>{{ step.step }}</strong>
+            <div class="developer-trace-step-meta">
+              <span *ngIf="step.stage">Stage: {{ step.stage }}</span>
+              <span *ngIf="step.statusCode !== undefined">Status: {{ step.statusCode }}</span>
+              <span *ngIf="step.elapsedMs !== undefined">Elapsed: {{ step.elapsedMs }}ms</span>
+              <span *ngIf="step.timestamp">Time: {{ step.timestamp | date:'mediumTime' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="developer-workspace" *ngIf="overview">
+      <section class="developer-panel developer-collections-panel">
+      <div class="developer-panel-header">
+        <div>
+          <h4 class="developer-panel-title">MongoDB collections</h4>
+          <p class="developer-panel-copy">Select a collection to preview recent documents.</p>
+        </div>
+        <label class="developer-filter-field">
+          <span>Preview docs</span>
+          <select [(ngModel)]="previewLimit" class="developer-input" (change)="refreshSelectedCollection()">
+            <option *ngFor="let limit of previewLimits" [value]="limit">{{ limit }}</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="developer-collection-group">
+        <div class="developer-collection-group-head">
+          <div>
+            <span class="developer-collection-scope">Master</span>
+            <h5 class="developer-collection-db">{{ overview.masterDatabase.name }}</h5>
+          </div>
+          <label class="developer-collection-select-all">
+            <input type="checkbox" [checked]="isScopeMarkedForDeletion('master')" (change)="toggleScopeCollections('master', $any($event.target).checked)" />
+            Select all ({{ overview.masterDatabase.collectionCount }})
+          </label>
+        </div>
+
+        <div
+          *ngFor="let collection of masterCollections; trackBy: trackByCollectionName"
+          class="developer-collection-row"
+        >
+          <label class="developer-collection-check" [attr.aria-label]="'Mark ' + collection.name + ' for deletion'">
+            <input type="checkbox" [checked]="isCollectionMarkedForDeletion('master', collection.name)" (change)="toggleCollectionForDeletion('master', collection.name, $any($event.target).checked)" />
+          </label>
+          <button type="button" [class]="getCollectionButtonClass('master', collection.name)" (click)="selectCollection('master', collection.name)">
+            <div class="developer-collection-main">
+              <span class="developer-collection-name">{{ collection.name }}</span>
+              <span class="developer-collection-count">{{ collection.documentCount }} docs</span>
+            </div>
+            <span class="developer-collection-meta">{{ getCollectionSampleKeys(collection) }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="developer-collection-group">
+        <div class="developer-collection-group-head">
+          <div>
+            <span class="developer-collection-scope">Tenant</span>
+            <h5 class="developer-collection-db">{{ overview.tenantDatabase.name }}</h5>
+          </div>
+          <label class="developer-collection-select-all">
+            <input type="checkbox" [checked]="isScopeMarkedForDeletion('tenant')" (change)="toggleScopeCollections('tenant', $any($event.target).checked)" />
+            Select all ({{ overview.tenantDatabase.collectionCount }})
+          </label>
+        </div>
+
+        <div
+          *ngFor="let collection of tenantCollections; trackBy: trackByCollectionName"
+          class="developer-collection-row"
+        >
+          <label class="developer-collection-check" [attr.aria-label]="'Mark ' + collection.name + ' for deletion'">
+            <input type="checkbox" [checked]="isCollectionMarkedForDeletion('tenant', collection.name)" (change)="toggleCollectionForDeletion('tenant', collection.name, $any($event.target).checked)" />
+          </label>
+          <button type="button" [class]="getCollectionButtonClass('tenant', collection.name)" (click)="selectCollection('tenant', collection.name)">
+            <div class="developer-collection-main">
+              <span class="developer-collection-name">{{ collection.name }}</span>
+              <span class="developer-collection-count">{{ collection.documentCount }} docs</span>
+            </div>
+            <span class="developer-collection-meta">{{ getCollectionSampleKeys(collection) }}</span>
+          </button>
+        </div>
+      </div>
+
+      <section class="developer-delete-panel" *ngIf="selectedCollectionsForDeletion.length">
+        <div>
+          <h5>Delete selected collections</h5>
+          <p>
+            This permanently deletes the collection and its documents. Select collections from one scope only, then type every selected name exactly (comma or new-line separated).
+          </p>
+        </div>
+        <div class="developer-delete-selection">
+          <span *ngFor="let collection of selectedCollectionsForDeletion">{{ collection.scope }} / {{ collection.name }}</span>
+        </div>
+        <label class="developer-filter-field">
+          <span>Confirmation names</span>
+          <textarea [(ngModel)]="deleteConfirmationText" class="developer-input developer-delete-confirmation" rows="3" placeholder="Exact collection name(s)"></textarea>
+        </label>
+        <button type="button" class="developer-delete-button" (click)="deleteSelectedCollections()" [disabled]="deletingCollections || !canDeleteSelectedCollections">
+          {{ deletingCollections ? 'Deleting...' : 'Permanently Delete Selected' }}
+        </button>
+      </section>
+    </section>
+
+    <section class="developer-panel developer-preview-panel">
+      <div class="developer-panel-header">
+        <div>
+          <h4 class="developer-panel-title">Collection preview</h4>
+          <p class="developer-panel-copy">{{ selectedCollectionLabel }}</p>
+        </div>
+        <div class="developer-document-actions">
+          <button
+            type="button"
+            class="btn-secondary px-3 py-1.5 text-xs"
+            (click)="refreshSelectedCollection()"
+            [disabled]="loadingPreview || !selectedCollectionName"
+          >
+            {{ loadingPreview ? 'Loading Preview...' : 'Refresh Preview' }}
+          </button>
+          <button type="button" class="developer-document-delete" (click)="prepareSelectedCollectionForDeletion()" [disabled]="!selectedCollectionName">
+            Delete collection
+          </button>
+        </div>
+      </div>
+
+      <div *ngIf="!selectedCollectionName" class="developer-empty-state">
+        Select any master or tenant collection to inspect its latest documents.
+      </div>
+
+      <div *ngIf="collectionPreview as preview">
+        <div class="developer-preview-summary">
+          <div class="developer-preview-chip">
+            <span class="developer-preview-chip-label">Scope</span>
+            <strong>{{ preview.scope }}</strong>
+          </div>
+          <div class="developer-preview-chip">
+            <span class="developer-preview-chip-label">Database</span>
+            <strong>{{ preview.databaseName }}</strong>
+          </div>
+          <div class="developer-preview-chip">
+            <span class="developer-preview-chip-label">Documents</span>
+            <strong>{{ preview.returnedCount }}</strong>
+          </div>
+        </div>
+
+        <section class="developer-document-editor">
+          <div class="developer-document-editor-head">
+            <div>
+              <h5>{{ documentEditorMode === 'insert' ? 'Insert document' : 'Update document' }}</h5>
+              <p *ngIf="documentEditorMode === 'insert'">Add a JSON document to {{ preview.collectionName }}.</p>
+              <p *ngIf="documentEditorMode === 'update'">Editing document {{ documentEditorId }}. The _id cannot be changed.</p>
+            </div>
+            <button *ngIf="documentEditorMode === 'update'" type="button" class="btn-secondary px-3 py-1.5 text-xs" (click)="startInsertDocument()">Cancel edit</button>
+          </div>
+          <textarea [(ngModel)]="documentEditorJson" class="developer-code-input" rows="9" aria-label="Document JSON"></textarea>
+          <button type="button" class="btn-primary px-3 py-1.5 text-xs" (click)="saveDocument()" [disabled]="savingDocument">
+            {{ savingDocument ? 'Saving...' : (documentEditorMode === 'insert' ? 'Insert document' : 'Update document') }}
+          </button>
+        </section>
+
+        <div *ngIf="!preview.documents.length" class="developer-empty-state">
+          This collection does not have documents yet.
+        </div>
+
+        <div class="developer-document-list" *ngIf="preview.documents.length">
+          <article class="developer-document-card" *ngFor="let document of preview.documents; let index = index; trackBy: trackByDocumentIndex">
+            <div class="developer-document-head">
+              <span class="developer-document-index">Document {{ index + 1 }}</span>
+              <div class="developer-document-actions">
+                <button type="button" class="btn-secondary px-3 py-1.5 text-xs" (click)="startUpdateDocument(document)">Edit</button>
+                <button type="button" class="developer-document-delete" (click)="deleteDocument(document)" [disabled]="savingDocument">Delete</button>
+              </div>
+            </div>
+            <pre class="developer-code-block">{{ formatJson(document) }}</pre>
+          </article>
+        </div>
+      </div>
+    </section>
+  </div>
+  </section>
+
+  <section class="developer-panel developer-trial-panel" *ngIf="activeMenu === 'trial'">
+    <div class="developer-panel-header">
+      <div>
+        <h4 class="developer-panel-title">Trial Bot Management</h4>
+        <p class="developer-panel-copy">Manage trial plans, durations, and user limits for each bot.</p>
+      </div>
+      <button type="button" class="btn-secondary px-3 py-1.5 text-xs" (click)="closeTrialBotManagement()">
+        Back to Database
+      </button>
+    </div>
+    <app-trial-bot-management></app-trial-bot-management>
+  </section>
+
+  <section class="developer-panel developer-logs-panel" *ngIf="activeMenu === 'logs'">
+    <div class="developer-panel-header">
+      <div>
+        <h4 class="developer-panel-title">Recent server logs</h4>
+        <p class="developer-panel-copy">
+          Review logs for the selected date from the daily server log files.
+        </p>
+      </div>
+      <span class="developer-log-path" *ngIf="overview?.logConfig?.directory">Log dir: {{ overview?.logConfig?.directory }}</span>
+    </div>
+
+    <div class="developer-log-filters">
+      <label class="developer-filter-field">
+        <span>Date</span>
+        <input [(ngModel)]="logDate" class="developer-input" type="date" [max]="maxLogDate" />
+      </label>
+      <label class="developer-filter-field">
+        <span>Level</span>
+        <select [(ngModel)]="logLevel" class="developer-input">
+          <option *ngFor="let level of logLevels" [value]="level">{{ level }}</option>
+        </select>
+      </label>
+      <label class="developer-filter-field developer-filter-field-search">
+        <span>Search message, request ID, file</span>
+        <input [(ngModel)]="logSearch" class="developer-input" type="text" placeholder="Example: tenant_not_found or req-..." (keyup.enter)="refreshLogs()" />
+      </label>
+      <label class="developer-filter-field">
+        <span>Rows</span>
+        <input [(ngModel)]="logLimit" class="developer-input" type="number" min="10" max="200" />
+      </label>
+      <div class="developer-log-view-switch" role="group" aria-label="Log type">
+        <button type="button" [class.developer-log-view-active]="logView === 'all'" (click)="setLogView('all')">All logs</button>
+        <button type="button" [class.developer-log-view-active]="logView === 'api'" (click)="setLogView('api')">API requests</button>
+        <button type="button" [class.developer-log-view-active]="logView === 'application'" (click)="setLogView('application')">Application</button>
+      </div>
+      <button type="button" class="btn-secondary px-3 py-1.5 text-xs" (click)="showLogs('ERROR')">Errors Only</button>
+      <button type="button" class="btn-primary px-3 py-1.5 text-xs" (click)="refreshLogs()" [disabled]="loadingLogs">
+        {{ loadingLogs ? 'Refreshing...' : 'Apply Filters' }}
+      </button>
+    </div>
+
+    <div *ngIf="!visibleLogs.length" class="developer-empty-state">
+      {{ logView === 'api' ? 'No API request entries are available' : 'No log entries are available' }} for {{ logDate }} with the current filters.
+    </div>
+
+    <div class="developer-terminal developer-log-scroll" role="log" aria-label="Server log entries" *ngIf="visibleLogs.length">
+      <article class="developer-terminal-row" *ngFor="let entry of visibleLogs; trackBy: trackByLogIndex">
+        <time class="developer-terminal-time">{{ entry.timestamp | date:'HH:mm:ss.SSS' }}</time>
+        <span [class]="getLogLevelClass(entry.level)">{{ entry.level }}</span>
+        <span class="developer-terminal-api" *ngIf="isApiLog(entry)">API</span>
+        <div class="developer-terminal-message">
+          <ng-container *ngIf="isApiLog(entry); else applicationLog">
+            <strong>{{ entry['method'] }}</strong>
+            <code>{{ entry['url'] }}</code>
+            <span class="developer-terminal-status" *ngIf="entry['statusCode'] !== undefined">{{ entry['statusCode'] }}</span>
+            <span class="developer-terminal-duration" *ngIf="entry['durationMs'] !== undefined">{{ entry['durationMs'] }}ms</span>
+            <span class="developer-terminal-step">{{ entry['step'] || entry.message }}</span>
+          </ng-container>
+          <ng-template #applicationLog>{{ entry.message }}</ng-template>
+        </div>
+        <details class="developer-terminal-details">
+          <summary>Details</summary>
+          <div class="developer-terminal-detail-meta" *ngIf="entry.filename || entry.functionName || getLogRequestId(entry)">
+            <span *ngIf="entry.filename">{{ entry.filename }}</span>
+            <span *ngIf="entry.functionName">{{ entry.functionName }}</span>
+            <span *ngIf="getLogRequestId(entry)">{{ getLogRequestId(entry) }}</span>
+          </div>
+          <pre>{{ formatLogMeta(entry) }}</pre>
+        </details>
+      </article>
+    </div>
+  </section>
+</section>

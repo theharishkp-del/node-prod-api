@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/company-details/company-details.css"],
+  "sourcesContent": ["form {\r\n  gap: 0.5rem;\r\n}\r\n\r\nh2 {\r\n  font-size: 1rem;\r\n  margin-bottom: 0.25rem;\r\n}\r\n\r\np.mt-1 {\r\n  margin-top: 0.2rem;\r\n}\r\n\r\nlabel {\r\n  font-size: 0.78rem;\r\n  margin-bottom: 0.2rem;\r\n}\r\n\r\n.form-input,\r\n.form-select {\r\n  padding: 0.55rem 0.75rem;\r\n  font-size: 0.88rem;\r\n}\r\n\r\nbutton.btn {\r\n  padding: 0.55rem 0.85rem;\r\n  font-size: 0.8rem;\r\n}\r\n"],
+  "mappings": ";AAAA;AACE,OAAA;AACF;AAEA;AACE,aAAA;AACA,iBAAA;AACF;AAEA,CAAA,CAAA;AACE,cAAA;AACF;AAEA;AACE,aAAA;AACA,iBAAA;AACF;AAEA,CAAA;;AAEE,WAAA,QAAA;AACA,aAAA;AACF;AAEA,MAAA,CAAA;AACE,WAAA,QAAA;AACA,aAAA;AACF;",
+  "names": []
+}

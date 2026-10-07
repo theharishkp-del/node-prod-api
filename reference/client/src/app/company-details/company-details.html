@@ -1,0 +1,76 @@
+<form [formGroup]="form" (ngSubmit)="onNext()" class="space-y-5 rounded-2xl bg-white p-2">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h2 class="text-xl font-semibold text-slate-900">Company Details</h2>
+      <p class="mt-1 text-sm text-slate-600">Start with the primary company profile before branch setup and user registration.</p>
+    </div>
+    <span class="rounded-full px-3 py-1 text-xs font-semibold" [class.bg-amber-50]="onboardingState.isEditMode()" [class.text-amber-700]="onboardingState.isEditMode()" [class.bg-cyan-50]="!onboardingState.isEditMode()" [class.text-cyan-700]="!onboardingState.isEditMode()">
+      {{ onboardingState.isEditMode() ? 'Edit Mode' : 'Step 1 of 3' }}
+    </span>
+  </div>
+
+  <div *ngIf="existingRecordMessage" class="rounded-xl border border-cyan-200 bg-cyan-50 px-4 py-3 text-sm text-cyan-900">
+    {{ existingRecordMessage }}
+  </div>
+
+  <div *ngIf="existingRecordError" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+    {{ existingRecordError }}
+  </div>
+
+  <div>
+    <label class="form-label" for="companyName">Company Name <span class="text-red-500">*</span></label>
+    <input id="companyName" type="text" class="form-input" formControlName="companyName" />
+    <p class="form-error" *ngIf="hasError('companyName', 'required')">Company name is required.</p>
+  </div>
+
+  <div>
+    <label class="form-label" for="businessEmail">Business Email</label>
+    <input id="businessEmail" type="email" class="form-input" formControlName="businessEmail" />
+    <p class="form-error" *ngIf="hasError('businessEmail', 'email')">Enter a valid email address.</p>
+  </div>
+
+  <div>
+    <label class="form-label" for="phoneNumber">Phone Number</label>
+    <div class="grid gap-2 md:grid-cols-[18rem_minmax(0,1fr)]">
+      <app-country-code-select
+        [options]="countryCodes"
+        [value]="form.get('countryCode')?.value || '+1'"
+        [valueChange]="onCountryCodeChange.bind(this)"
+        panelWidthClass="w-full"
+        buttonClass="form-select w-full min-w-0"
+      />
+      <input id="phoneNumber" type="tel" class="form-input flex-1" formControlName="phoneNumber" placeholder="9876543210" />
+    </div>
+    <p class="form-error" *ngIf="hasError('phoneNumber', 'pattern')">Enter a valid phone number.</p>
+    <p class="form-error" *ngIf="showEmailOrPhoneError">Provide either a business email or a phone number.</p>
+  </div>
+
+  <div>
+    <app-address-picker formControlName="address" [label]="'Company Address'" [required]="true"></app-address-picker>
+  </div>
+
+  <div>
+    <label class="form-label" for="website">Website (optional)</label>
+    <input id="website" type="text" class="form-input" formControlName="website" placeholder="https://example.com" />
+    <p class="form-error" *ngIf="hasError('website', 'pattern')">Enter a valid website URL.</p>
+  </div>
+
+  <div>
+    <label class="form-label" for="currency">Currency <span class="text-red-500">*</span></label>
+    <select id="currency" class="form-select" formControlName="currency">
+      <option value="" disabled>Select currency</option>
+      <option *ngFor="let currency of currencies" [value]="currency.code">
+        {{ currency.code }} - {{ currency.name }} ({{ currency.symbol }})
+      </option>
+    </select>
+    <p class="form-error" *ngIf="hasError('currency', 'required')">Please select a currency.</p>
+  </div>
+
+  <!-- timezone captured silently via detectedTimezone, no field rendered -->
+
+  <div class="flex flex-wrap justify-end gap-3 pt-2">
+    <button type="button" class="btn-secondary" (click)="onReset()">Reset</button>
+    <button type="button" class="btn-danger" (click)="onCancel()">Cancel</button>
+    <button type="submit" class="btn-primary" [disabled]="submitting">Next</button>
+  </div>
+</form>

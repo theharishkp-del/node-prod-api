@@ -1,0 +1,146 @@
+<section class="template-calendar">
+  <header class="calendar-hero">
+    <div class="calendar-hero-copy">
+      <p class="calendar-eyebrow">{{ resolvedConfig.eyebrow }}</p>
+      <h2 class="calendar-title">{{ resolvedConfig.heading }}</h2>
+      <p class="calendar-subtitle">{{ resolvedConfig.description }}</p>
+    </div>
+
+    <div class="calendar-badges" *ngIf="badges.length">
+      <article
+        *ngFor="let badge of badges; trackBy: trackById"
+        class="summary-card"
+        [ngClass]="getToneClass(badge.tone)"
+      >
+        <span>{{ badge.label }}</span>
+        <strong>{{ badge.value }}</strong>
+        <small *ngIf="badge.description">{{ badge.description }}</small>
+      </article>
+    </div>
+  </header>
+
+  <nav class="calendar-toolbar" aria-label="Calendar navigation">
+    <div class="calendar-nav">
+      <button type="button" class="toolbar-button" [disabled]="loading || refreshing" (click)="movePeriod(-1)">
+        Previous
+      </button>
+      <button type="button" class="toolbar-button toolbar-button-primary" [disabled]="loading || refreshing" (click)="jumpToToday()">
+        {{ resolvedConfig.todayButtonLabel }}
+      </button>
+      <button type="button" class="toolbar-button" [disabled]="loading || refreshing" (click)="movePeriod(1)">
+        Next
+      </button>
+    </div>
+
+    <h3 class="calendar-range">{{ getRangeLabel() }}</h3>
+
+    <div class="calendar-view-switch">
+      <button
+        *ngFor="let view of resolvedConfig.enabledViews"
+        type="button"
+        class="view-button"
+        [disabled]="loading || refreshing"
+        [class.view-button-active]="viewMode === view"
+        (click)="setViewMode(view)"
+      >
+        {{ view | titlecase }}
+      </button>
+    </div>
+  </nav>
+
+  <div *ngIf="refreshing" class="calendar-refreshing" role="status">
+    <span class="calendar-refreshing-dot"></span>
+    <span>{{ resolvedConfig.loadingMessage }}</span>
+  </div>
+
+  <div *ngIf="loading && !calendarDays.length" class="calendar-state" role="status">
+    <h3>{{ resolvedConfig.loadingMessage }}</h3>
+  </div>
+
+  <div *ngIf="!loading && errorMessage" class="calendar-state calendar-state-error" role="alert">
+    <h3>Unable to load calendar</h3>
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <div *ngIf="(!loading || calendarDays.length) && !errorMessage" class="calendar-layout">
+    <div class="calendar-board">
+      <div class="calendar-weekdays" *ngIf="viewMode === 'month'" aria-hidden="true">
+        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+      </div>
+
+      <div class="calendar-grid" [class.calendar-grid-compact]="viewMode !== 'month'">
+        <article
+          *ngFor="let day of calendarDays; trackBy: trackDay"
+          class="calendar-day"
+          [class.calendar-day-outside]="!day.inCurrentMonth && viewMode === 'month'"
+          [class.calendar-day-selected]="day.isSelected"
+          [class.calendar-day-today]="day.isToday"
+          (click)="selectDay(day)"
+          (keydown.enter)="selectDay(day)"
+          (keydown.space)="$event.preventDefault(); selectDay(day)"
+          tabindex="0"
+          role="button"
+          [attr.aria-label]="(day.date | date:'fullDate') + ', ' + getEventCountLabel(day.events.length)"
+        >
+          <div class="calendar-day-header">
+            <div class="calendar-day-heading">
+              <span class="calendar-day-number">{{ day.date.getDate() }}</span>
+              <span class="calendar-day-label" *ngIf="viewMode !== 'month'">{{ getDayLabel(day) }}</span>
+            </div>
+            <span class="calendar-day-count">{{ getEventCountLabel(day.events.length) }}</span>
+          </div>
+
+          <div class="calendar-day-events">
+            <button
+              *ngFor="let event of day.events | slice:0:resolvedConfig.maxEventsPerDay; trackBy: trackById"
+              type="button"
+              class="calendar-event"
+              [ngClass]="getToneClass(event.tone)"
+              (click)="selectEvent(event, $event)"
+            >
+              <span class="calendar-event-dot"></span>
+              <span class="calendar-event-text">{{ event.title }}</span>
+              <span class="calendar-event-badge" *ngIf="event.badge">{{ event.badge }}</span>
+            </button>
+
+            <p *ngIf="day.events.length > resolvedConfig.maxEventsPerDay" class="calendar-more">
+              +{{ day.events.length - resolvedConfig.maxEventsPerDay }} more
+            </p>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <section #eventsPanel class="calendar-events-panel">
+      <div class="events-panel-head">
+        <div>
+          <p class="calendar-eyebrow">{{ resolvedConfig.selectedDayEyebrow }}</p>
+          <h3 class="events-panel-title">{{ selectedDateIso | date:'fullDate' }}</h3>
+        </div>
+        <p class="events-panel-count">{{ getEventCountLabel(getVisibleEvents().length) }}</p>
+      </div>
+
+      <div *ngIf="getVisibleEvents().length; else noEvents" class="events-panel-grid">
+        <button
+          *ngFor="let event of getVisibleEvents(); trackBy: trackById"
+          type="button"
+          class="panel-event"
+          [ngClass]="getToneClass(event.tone)"
+          (click)="selectEvent(event)"
+        >
+          <span class="panel-event-topline">
+            <span>{{ event.typeLabel || event.badge || 'Event' }}</span>
+            <span>{{ event.startAt | date:'MMM d, h:mm a' }}</span>
+          </span>
+          <strong>{{ event.title }}</strong>
+          <small>{{ event.subtitle || 'No additional details' }}</small>
+          <span class="event-status" *ngIf="event.status">{{ event.status }}</span>
+        </button>
+      </div>
+
+      <ng-template #noEvents>
+        <p class="sidebar-empty">{{ resolvedConfig.emptyStateMessage }}</p>
+      </ng-template>
+    </section>
+  </div>
+</section>

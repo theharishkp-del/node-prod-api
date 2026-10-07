@@ -1,0 +1,289 @@
+<section class="calendar-shell">
+  <div class="calendar-hero">
+    <div class="calendar-hero-copy">
+      <p class="calendar-eyebrow">Admin Calendar</p>
+      <h2 class="calendar-title">Enquiries and work order conversions</h2>
+      <p class="calendar-subtitle">
+        Track incoming customer enquiries, review converted work orders, and open each conversion with quote,
+        invoice, payment, customer, and product details.
+      </p>
+    </div>
+
+    <div class="calendar-summary" *ngIf="calendarResponse?.summary">
+      <div class="summary-card summary-card-enquiry">
+        <span>This Range</span>
+        <strong>{{ calendarResponse?.summary?.totalEnquiries || 0 }}</strong>
+        <small>Customer enquiries</small>
+      </div>
+      <div class="summary-card summary-card-conversion">
+        <span>This Range</span>
+        <strong>{{ calendarResponse?.summary?.totalConversions || 0 }}</strong>
+        <small>Work order conversions</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="calendar-toolbar">
+    <div class="calendar-nav">
+      <button type="button" class="toolbar-button" [disabled]="loading || refreshing" (click)="previousPeriod()">Previous</button>
+      <button type="button" class="toolbar-button toolbar-button-primary" [disabled]="loading || refreshing" (click)="jumpToToday()">Today</button>
+      <button type="button" class="toolbar-button" [disabled]="loading || refreshing" (click)="nextPeriod()">Next</button>
+    </div>
+
+    <h3 class="calendar-range">{{ getRangeLabel() }}</h3>
+
+    <div class="calendar-view-switch">
+      <button type="button" class="view-button" [disabled]="loading || refreshing" [class.view-button-active]="viewMode === 'month'" (click)="setViewMode('month')">Month</button>
+      <button type="button" class="view-button" [disabled]="loading || refreshing" [class.view-button-active]="viewMode === 'week'" (click)="setViewMode('week')">Week</button>
+      <button type="button" class="view-button" [disabled]="loading || refreshing" [class.view-button-active]="viewMode === 'day'" (click)="setViewMode('day')">Day</button>
+    </div>
+  </div>
+
+  <div *ngIf="refreshing" class="calendar-refreshing">
+    <span class="calendar-refreshing-dot"></span>
+    <span>Loading {{ getRangeLabel() }}...</span>
+  </div>
+
+  <div *ngIf="loading && !calendarDays.length" class="calendar-empty">
+    <h3>Loading calendar...</h3>
+    <p>Please wait while we prepare the current schedule.</p>
+  </div>
+
+  <div *ngIf="!loading && !refreshing && errorMessage" class="calendar-empty calendar-empty-error">
+    <h3>Unable to load calendar</h3>
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <div *ngIf="(!loading || calendarDays.length) && !errorMessage" class="calendar-layout">
+    <div class="calendar-board">
+      <div class="calendar-weekdays" *ngIf="viewMode === 'month'">
+        <span>Sun</span>
+        <span>Mon</span>
+        <span>Tue</span>
+        <span>Wed</span>
+        <span>Thu</span>
+        <span>Fri</span>
+        <span>Sat</span>
+      </div>
+
+      <div class="calendar-grid" [class.calendar-grid-compact]="viewMode !== 'month'">
+        <article
+          *ngFor="let day of calendarDays"
+          class="calendar-day"
+          [class.calendar-day-outside]="!day.inCurrentMonth && viewMode === 'month'"
+          [class.calendar-day-selected]="day.isSelected"
+          [class.calendar-day-today]="day.isToday"
+          (click)="selectDay(day)"
+          tabindex="0"
+        >
+          <div class="calendar-day-header">
+            <div class="calendar-day-heading">
+              <span class="calendar-day-number">{{ day.date.getDate() }}</span>
+              <span class="calendar-day-label" *ngIf="viewMode !== 'month'">{{ getDayLabel(day) }}</span>
+            </div>
+            <span class="calendar-day-count">{{ getDayEventCountLabel(day) }}</span>
+          </div>
+
+          <div class="calendar-day-events">
+            <button
+              *ngFor="let event of day.events | slice:0:3"
+              type="button"
+              [class]="getEventClass(event)"
+              (click)="$event.stopPropagation(); openEvent(event)"
+            >
+              <span class="calendar-event-dot"></span>
+              <span class="calendar-event-text">{{ getCompactEventLabel(event) }}</span>
+            </button>
+
+            <p *ngIf="day.events.length > 3" class="calendar-more">+{{ day.events.length - 3 }} more</p>
+          </div>
+        </article>
+      </div>
+    </div>
+
+    <section #eventsPanel class="calendar-events-panel">
+      <div class="events-panel-head">
+        <div>
+          <p class="sidebar-eyebrow">Selected Day</p>
+          <h3 class="events-panel-title">{{ selectedDateIso | date:'fullDate' }}</h3>
+        </div>
+        <p class="events-panel-count">{{ getSelectedDayEvents().length }} event(s) on this date</p>
+      </div>
+
+      <div *ngIf="getVisibleEvents().length; else noEvents" class="events-panel-grid">
+        <button *ngFor="let event of getVisibleEvents()" type="button" [class]="getEventClass(event)" (click)="openEvent(event)">
+          <div class="sidebar-event-topline">
+            <span>{{ getEventTypeLabel(event) }}</span>
+            <span>{{ event.startAt | date:'MMM d, h:mm a' }}</span>
+          </div>
+          <strong>{{ getCompactEventLabel(event) }}</strong>
+          <small>{{ event.subtitle || 'No additional details' }}</small>
+        </button>
+      </div>
+      <ng-template #noEvents>
+        <p class="sidebar-empty">No events for this selection.</p>
+      </ng-template>
+    </section>
+  </div>
+</section>
+
+<div *ngIf="selectedEvent" class="calendar-dialog-backdrop" (click)="closeDialog()">
+  <div class="calendar-dialog-panel" (click)="$event.stopPropagation()">
+    <div class="dialog-head">
+      <div>
+        <p class="calendar-eyebrow">{{ selectedEvent.eventType === 'work_order_conversion' ? 'Work Order' : 'Customer Enquiry' }}</p>
+        <h3 class="dialog-title">{{ selectedEvent.title }}</h3>
+        <p class="dialog-subtitle">{{ selectedEvent.subtitle }}</p>
+      </div>
+      <button type="button" class="dialog-close" (click)="closeDialog()">Close</button>
+    </div>
+
+    <div *ngIf="selectedEvent.eventType !== 'work_order_conversion'" class="dialog-grid dialog-grid-enquiry">
+      <section class="dialog-overview dialog-overview-enquiry">
+        <div class="overview-pill">
+          <span>Event Type</span>
+          <strong>Customer Enquiry</strong>
+        </div>
+        <div class="overview-pill">
+          <span>Status</span>
+          <strong>{{ getEventStatusLabel(selectedEvent) }}</strong>
+        </div>
+        <div class="overview-pill">
+          <span>Created At</span>
+          <strong>{{ selectedEvent.startAt | date:'MMM d, y, h:mm a' }}</strong>
+        </div>
+        <div class="overview-pill">
+          <span>Work Order</span>
+          <strong>Not created</strong>
+        </div>
+      </section>
+
+      <section class="dialog-card dialog-card-highlight">
+        <h4>Enquiry Details</h4>
+        <p><span>Customer</span><strong>{{ selectedEvent.title || '-' }}</strong></p>
+        <p><span>Reference</span><strong>{{ selectedEvent.subtitle || '-' }}</strong></p>
+        <p><span>Status</span><strong>{{ getEventStatusLabel(selectedEvent) }}</strong></p>
+        <p><span>Date</span><strong>{{ selectedEvent.startAt | date:'fullDate' }}</strong></p>
+        <p><span>Time</span><strong>{{ selectedEvent.startAt | date:'shortTime' }}</strong></p>
+      </section>
+
+      <section class="dialog-card">
+        <h4>Next Step</h4>
+        <p class="dialog-note">
+          This is only a customer enquiry record. No work order has been created for this event yet.
+        </p>
+      </section>
+    </div>
+
+    <div *ngIf="selectedEvent.eventType === 'work_order_conversion'">
+      <div *ngIf="detailsLoading" class="dialog-simple">
+        <p>Loading work order details...</p>
+      </div>
+
+      <div *ngIf="!detailsLoading && workOrderDetailsError" class="dialog-simple dialog-simple-error">
+        <p>{{ workOrderDetailsError }}</p>
+      </div>
+
+      <div *ngIf="!detailsLoading && selectedWorkOrderDetails as details" class="dialog-grid">
+        <section class="dialog-overview">
+          <div class="overview-pill">
+            <span>Order Ref</span>
+            <strong>{{ details.workOrder.orderReferenceNumber || '-' }}</strong>
+          </div>
+          <div class="overview-pill">
+            <span>Customer</span>
+            <strong>{{ details.customer?.displayName || '-' }}</strong>
+          </div>
+          <div class="overview-pill">
+            <span>Payment</span>
+            <strong>{{ details.workOrder.paymentStatus || '-' }}</strong>
+          </div>
+          <div class="overview-pill">
+            <span>Total</span>
+            <strong>{{ details.summary.totalAmount != null ? (details.summary.totalAmount | number:'1.2-2') : '-' }}</strong>
+          </div>
+        </section>
+
+        <section class="dialog-overview">
+          <div class="overview-pill">
+            <span>Quote</span>
+            <strong>{{ details.quote?.quoteNumber || details.workOrder.quoteNumberRef || '-' }}</strong>
+          </div>
+          <div class="overview-pill">
+            <span>Invoice</span>
+            <strong>{{ details.invoice?.invoiceNumber || details.workOrder.invoiceNumberRef || '-' }}</strong>
+          </div>
+          <div class="overview-pill">
+            <span>Quote PDF</span>
+            <strong>{{ details.workOrder.quotePdf?.url ? 'Available' : 'Not available' }}</strong>
+          </div>
+          <div class="overview-pill">
+            <span>Invoice PDF</span>
+            <strong>{{ details.workOrder.invoicePdf?.url ? 'Available' : 'Not available' }}</strong>
+          </div>
+        </section>
+
+        <section class="dialog-card dialog-card-highlight">
+          <h4>Work Order</h4>
+          <p><span>Order Ref</span><strong>{{ details.workOrder.orderReferenceNumber || '-' }}</strong></p>
+          <p><span>Work Order</span><strong>{{ details.workOrder.workOrderNumber || '-' }}</strong></p>
+          <p><span>Status</span><strong>{{ details.workOrder.status || '-' }}</strong></p>
+          <p><span>Payment</span><strong>{{ details.workOrder.paymentStatus || '-' }}</strong></p>
+          <p><span>Total</span><strong>{{ details.summary.totalAmount != null ? (details.summary.totalAmount | number:'1.2-2') : '-' }}</strong></p>
+          <p><span>Balance</span><strong>{{ details.summary.balanceAmount != null ? (details.summary.balanceAmount | number:'1.2-2') : '-' }}</strong></p>
+        </section>
+
+        <section class="dialog-card">
+          <h4>Customer</h4>
+          <p><span>Name</span><strong>{{ details.customer?.displayName || '-' }}</strong></p>
+          <p><span>Code</span><strong>{{ details.customer?.customerCode || '-' }}</strong></p>
+          <p><span>Email</span><strong>{{ details.customer?.email || '-' }}</strong></p>
+          <p><span>Phone</span><strong>{{ details.customer?.phone || details.customer?.mobile || '-' }}</strong></p>
+        </section>
+
+        <section class="dialog-card">
+          <h4>Quote</h4>
+          <p><span>Number</span><strong>{{ details.quote?.quoteNumber || details.workOrder.quoteNumberRef || '-' }}</strong></p>
+          <p><span>Status</span><strong>{{ details.quote?.status || '-' }}</strong></p>
+          <p><span>Total</span><strong>{{ details.quote?.grandTotal != null ? (details.quote?.grandTotal | number:'1.2-2') : '-' }}</strong></p>
+          <a *ngIf="details.workOrder.quotePdf?.url" class="dialog-link" [href]="details.workOrder.quotePdf?.url" target="_blank" rel="noopener noreferrer">View Quote PDF</a>
+        </section>
+
+        <section class="dialog-card">
+          <h4>Invoice</h4>
+          <p><span>Number</span><strong>{{ details.invoice?.invoiceNumber || details.workOrder.invoiceNumberRef || '-' }}</strong></p>
+          <p><span>Status</span><strong>{{ details.invoice?.status || '-' }}</strong></p>
+          <p><span>Paid</span><strong>{{ details.invoice?.paidAmount != null ? (details.invoice?.paidAmount | number:'1.2-2') : '-' }}</strong></p>
+          <p><span>Balance</span><strong>{{ details.invoice?.balanceAmount != null ? (details.invoice?.balanceAmount | number:'1.2-2') : '-' }}</strong></p>
+          <a *ngIf="details.workOrder.invoicePdf?.url" class="dialog-link" [href]="details.workOrder.invoicePdf?.url" target="_blank" rel="noopener noreferrer">View Invoice PDF</a>
+        </section>
+
+        <section class="dialog-card dialog-card-wide">
+          <h4>Products</h4>
+          <div class="dialog-products" *ngIf="details.workOrder.lineItems?.length; else noProductsDialog">
+            <div *ngFor="let item of details.workOrder.lineItems">
+              <strong>{{ item.name }}</strong>
+              <span>Qty {{ item.quantity }} · {{ item.rate | number:'1.2-2' }}</span>
+            </div>
+          </div>
+          <ng-template #noProductsDialog>
+            <p class="sidebar-empty">No product lines available.</p>
+          </ng-template>
+        </section>
+
+        <section class="dialog-card dialog-card-wide">
+          <h4>Payments</h4>
+          <div class="dialog-products" *ngIf="details.payments.length; else noPaymentsDialog">
+            <div *ngFor="let payment of details.payments">
+              <strong>{{ payment.paymentNumber || '-' }}</strong>
+              <span>{{ payment.status || '-' }} · {{ payment.amount | number:'1.2-2' }} · {{ payment.referenceNumber || payment.gatewayPaymentId || '-' }}</span>
+            </div>
+          </div>
+          <ng-template #noPaymentsDialog>
+            <p class="sidebar-empty">No payment records.</p>
+          </ng-template>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>

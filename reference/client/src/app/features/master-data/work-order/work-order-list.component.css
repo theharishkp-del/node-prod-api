@@ -1,0 +1,66 @@
+:host {
+  display: block;
+}
+
+/* ── Dialog overlay entrance animation ─────────────────────────── */
+.wo-dialog {
+  animation: wo-slide-up 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes wo-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── Header ─────────────────────────────────────────────────────── */
+.wo-dialog-header {
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* ── KPI cards hover lift ───────────────────────────────────────── */
+.wo-kpi-card {
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.wo-kpi-card:hover {
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.08);
+  transform: translateY(-1px);
+}
+
+/* ── Detail section cards ───────────────────────────────────────── */
+.wo-detail-card {
+  transition: box-shadow 0.15s ease;
+}
+
+.wo-detail-card:hover {
+  box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.10);
+}
+
+/* ── Close button ───────────────────────────────────────────────── */
+.wo-close-btn {
+  flex-shrink: 0;
+}
+
+/* ── Scrollbar styling inside dialog ───────────────────────────── */
+.wo-dialog::-webkit-scrollbar {
+  width: 6px;
+}
+
+.wo-dialog::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.wo-dialog::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 99px;
+}
+
+.wo-dialog::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
