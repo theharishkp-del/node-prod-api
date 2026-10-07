@@ -123,3 +123,78 @@ All logging goes through winston (`src/config/logger.js`).
 - Set `CORS_ORIGIN` to explicit origins in production.
 - Keep real credentials out of git. Use environment variables or a secret manager; `.env` is git-ignored.
 - Consider setting `LOG_BODIES=false` in production, or at least review which fields get redacted.
+
+## Serving an Angular app under a sub-path (nginx + PM2)
+
+Target URL: `https://devvir.cognitivemobile.net/iqagent/<ANGULAR_APP_NAME>/`
+(e.g. `https://devvir.cognitivemobile.net/iqagent/portal/`).
+
+### Routing
+
+| Path | Served by |
+| --- | --- |
+| `${APP_BASE_PATH}/health`, `/health/ready` | health routes (also at `/health` for local checks) |
+| `${APP_BASE_PATH}/api/v1/...` | API (also at `/api/v1` for local checks) |
+| `${APP_BASE_PATH}/<name>` | 301 → `${APP_BASE_PATH}/<name>/` |
+| `${APP_BASE_PATH}/<name>/main.abc123.js` | static file, `Cache-Control: public, max-age=31536000, immutable` |
+| `${APP_BASE_PATH}/<name>/` and deep links (`/orders/5`) | `index.html`, `Cache-Control: no-cache` |
+| `${APP_BASE_PATH}/<name>/missing.js`, `.../api/...` | JSON 404 (no SPA fallback) |
+
+Files whose name contains a hash (`main.abc123.js`, `styles-5INURTSO.css`) get the 1-year
+immutable cache; everything else (index.html, favicon.ico, assets without hash) is `no-cache`.
+Helmet's Content-Security-Policy is **disabled for the Angular paths only** (Angular's
+critical-CSS inlining uses inline `<style>`/`onload` and apps often call other origins);
+all other helmet headers stay on, and API/health keep the strict default CSP. Add a CSP in
+nginx if you need one for the SPA. If the dist folder or `index.html` is missing at startup,
+a warning is logged and the app is skipped (the API still starts).
+
+### 1. Build Angular with the right base href (critical)
+
+```bash
+ng build --configuration production --base-href /iqagent/portal/
+```
+
+`--base-href` must equal `${APP_BASE_PATH}/${ANGULAR_APP_NAME}/` **with the trailing slash**.
+It sets `<base href>` in index.html, which the browser uses to resolve `main-*.js`,
+`styles-*.css`, `assets/...` and which the Angular router uses for deep links. With the
+default `/`, the browser requests `https://devvir.cognitivemobile.net/main.js` (outside
+`/iqagent/`) and the app loads blank.
+
+### 2. Copy the output
+
+Angular 17+ writes to `dist/<project>/browser/`; older versions to `dist/<project>/`.
+Copy the folder that contains `index.html`:
+
+```bash
+mkdir -p public/portal && rsync -a --delete dist/portal/browser/ /path/to/node-prod-api/public/portal/
+```
+
+(or point `ANGULAR_DIST_PATH` straight at the build folder).
+
+### 3. `.env`
+
+```dotenv
+TRUST_PROXY=1
+APP_BASE_PATH=/iqagent
+ANGULAR_ENABLED=true
+ANGULAR_APP_NAME=portal
+ANGULAR_DIST_PATH=./public/portal
+# several apps: ANGULAR_APPS=portal:./public/portal,admin:./public/admin
+```
+
+### 4. Restart
+
+```bash
+pm2 restart ecosystem.config.js --env production   # or: npm run pm2:reload
+```
+
+Config is read at startup, so new dist files or `.env` changes need a restart/reload.
+
+### 5. nginx
+
+See [`docs/nginx.example.conf`](docs/nginx.example.conf): `location /iqagent/ { proxy_pass http://127.0.0.1:3000; }`
+**without** a trailing slash on `proxy_pass`, so the `/iqagent` prefix reaches Node unchanged,
+plus `Host`, `X-Real-IP`, `X-Forwarded-For`, `X-Forwarded-Proto` headers (with `TRUST_PROXY=1`).
+
+Check: `curl -I https://devvir.cognitivemobile.net/iqagent/health` and open
+`https://devvir.cognitivemobile.net/iqagent/portal/`.

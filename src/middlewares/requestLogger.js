@@ -19,7 +19,7 @@ function captureResponseBody(res) {
   const originalSend = res.send;
   res.send = function sendWithCapture(body) {
     // res.json() calls res.send() with a string; only keep the first (outermost) call.
-    if (res.locals.__body === undefined) res.locals.__body = body;
+    if (res.locals.__body === undefined && !res.locals.isStaticAsset) res.locals.__body = body;
     return originalSend.call(this, body);
   };
 }
@@ -73,7 +73,8 @@ function requestLogger(req, res, next) {
     };
     if (aborted) entry.aborted = true;
 
-    if (config.log.bodies) {
+    // Static assets (Angular bundles, index.html): request line only, never bodies.
+    if (config.log.bodies && !res.locals.isStaticAsset) {
       if (req.body !== undefined && Object.keys(req.body || {}).length > 0) {
         entry.reqBody = safeBody(req.body);
       }

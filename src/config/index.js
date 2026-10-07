@@ -73,12 +73,34 @@ const envSchema = z.object({
   CORS_CREDENTIALS: z.stringbool().default(false),
   RATE_LIMIT_WINDOW_MS: z.coerce.number().int().min(1000).default(15 * 60 * 1000),
   RATE_LIMIT_MAX: z.coerce.number().int().min(1).default(100),
+
+  // Sub-path / Angular static hosting
+  APP_BASE_PATH: z
+    .string()
+    .regex(/^[A-Za-z0-9._~/-]*$/, 'may only contain URL path characters, e.g. /iqagent')
+    .default('/iqagent'),
+  ANGULAR_ENABLED: z.stringbool().default(false),
+  ANGULAR_APP_NAME: z
+    .string()
+    .regex(/^[A-Za-z0-9._~-]+$/, 'must be a single URL segment, e.g. portal')
+    .optional(),
+  ANGULAR_DIST_PATH: z.string().min(1).optional(),
+  ANGULAR_APPS: z
+    .string()
+    .regex(
+      /^\s*[A-Za-z0-9._~-]+:[^,]+(\s*,\s*[A-Za-z0-9._~-]+:[^,]+)*\s*$/,
+      "must look like 'name1:path1,name2:path2'",
+    )
+    .optional(),
 });
 
 // Treat empty strings ("FOO=") as "not set" so defaults apply.
 const rawEnv = Object.fromEntries(
   Object.entries(process.env).filter(([, v]) => v !== undefined && v !== ''),
 );
+
+// APP_BASE_PATH= (empty) explicitly means "serve at the root", so keep it.
+if (process.env.APP_BASE_PATH === '') rawEnv.APP_BASE_PATH = '';
 
 const parsed = envSchema.safeParse(rawEnv);
 
@@ -104,6 +126,37 @@ if (env.MONGO_MIN_POOL_SIZE > env.MONGO_MAX_POOL_SIZE) {
 if (env.CORS_CREDENTIALS && csv(env.CORS_ORIGIN).includes('*')) {
   process.stderr.write(
     '[config] CORS_CREDENTIALS=true cannot be combined with CORS_ORIGIN=*; list explicit origins\n',
+  );
+  process.exit(1);
+}
+
+/** '/iqagent/' | 'iqagent' -> '/iqagent'; '' | '/' -> '' (root). */
+function normaliseBasePath(value) {
+  const trimmed = String(value || '').trim().replace(/\/{2,}/g, '/').replace(/^\/+|\/+$/g, '');
+  return trimmed ? `/${trimmed}` : '';
+}
+
+/** Resolve the Angular app list from ANGULAR_APPS and/or ANGULAR_APP_NAME + ANGULAR_DIST_PATH. */
+function parseAngularApps(e) {
+  const apps = [];
+  if (e.ANGULAR_APPS) {
+    for (const pair of csv(e.ANGULAR_APPS)) {
+      const idx = pair.indexOf(':');
+      apps.push({ name: pair.slice(0, idx).trim(), distPath: pair.slice(idx + 1).trim() });
+    }
+  }
+  if (e.ANGULAR_APP_NAME && e.ANGULAR_DIST_PATH) {
+    apps.push({ name: e.ANGULAR_APP_NAME, distPath: e.ANGULAR_DIST_PATH });
+  }
+  const seen = new Set();
+  return apps
+    .filter((a) => (seen.has(a.name) ? false : seen.add(a.name)))
+    .map((a) => Object.freeze({ name: a.name, distPath: path.resolve(process.cwd(), a.distPath) }));
+}
+
+if (env.ANGULAR_ENABLED && !env.ANGULAR_APPS && !(env.ANGULAR_APP_NAME && env.ANGULAR_DIST_PATH)) {
+  process.stderr.write(
+    '[config] ANGULAR_ENABLED=true requires ANGULAR_APP_NAME + ANGULAR_DIST_PATH (or ANGULAR_APPS)\n',
   );
   process.exit(1);
 }
@@ -179,6 +232,13 @@ const config = Object.freeze({
   rateLimit: Object.freeze({
     windowMs: env.RATE_LIMIT_WINDOW_MS,
     max: env.RATE_LIMIT_MAX,
+  }),
+
+  basePath: normaliseBasePath(env.APP_BASE_PATH),
+
+  angular: Object.freeze({
+    enabled: env.ANGULAR_ENABLED,
+    apps: Object.freeze(parseAngularApps(env)),
   }),
 });
 
