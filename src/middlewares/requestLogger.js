@@ -74,7 +74,11 @@ function requestLogger(req, res, next) {
     if (aborted) entry.aborted = true;
 
     // Static assets (Angular bundles, index.html): request line only, never bodies.
-    if (config.log.bodies && !res.locals.isStaticAsset) {
+    // Routes that log their own full bodies (EO with EO_LOG_FULL=true) set
+    // res.locals.bodyLoggedSeparately so the truncated copies are not logged twice.
+    if (config.log.bodies && res.locals.bodyLoggedSeparately) {
+      entry.bodiesLoggedAs = res.locals.bodyLoggedSeparately;
+    } else if (config.log.bodies && !res.locals.isStaticAsset) {
       if (req.body !== undefined && Object.keys(req.body || {}).length > 0) {
         entry.reqBody = safeBody(req.body);
       }

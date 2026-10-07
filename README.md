@@ -56,8 +56,81 @@ The image is based on `node:22-alpine`, installs prod deps only with `npm ci --o
 | GET    | `/api/v1/users`     | List users (`?page=&limit=`)                                     |
 | GET    | `/api/v1/users/:id` | Get one user                                                     |
 | POST   | `/api/v1/users`     | Create a user `{ name, email, password, role? }`                 |
+| POST   | `/api/customerOrderRequestEo` | EO bot conversation step (see below); no DB needed     |
 
 Errors always look like `{ "error": { "message", "code", "requestId", "details?" } }`.
+
+## EO endpoint: `POST /api/customerOrderRequestEo`
+
+The bot platform calls this for a conversation step. It is served at `/api/customerOrderRequestEo` and `${APP_BASE_PATH}/api/customerOrderRequestEo` (e.g. `/iqagent/api/customerOrderRequestEo`).
+
+- **Path:** it lives directly under `/api`, not under the versioned `/api/v1`, because that is the exact path set on the bot platform. Future bot (EO) endpoints should also go in `src/routes/eo.routes.js`, and regular REST resources stay under `/api/v1`.
+- **No checks or DB:** requests are not validated, and the endpoint does not use `requireDb`, so it keeps answering while MongoDB is down. Nothing is stored in the database yet.
+- **Rate limit:** like everything else under `/api`, it goes through the `/api` rate limiter (`RATE_LIMIT_MAX` per `RATE_LIMIT_WINDOW_MS` per IP).
+- **Flow:** `decodeContext(body.context)` → `resolveHandler(questionKey, answerKey)` → `handler(payload, decoded)` → `buildEoResponse(...)` → HTTP 200 JSON.
+- **Errors:** if a handler throws, the error is logged (`eo.handler_error`) and the reply is still **HTTP 200**, with a `buildEoError(...)` body (`resultCode '1'`, `resultText 'failure'`, `eoState 'stop'`). The platform reads `resultCode`/`eoState`, not the HTTP status. The failure code and text are placeholders until the platform confirms them; they are set in `src/eo/constants.js`.
+
+Response shape (`req` = `body.reqMessageObj`):
+
+```json
+{
+  "resultCode": "0", "resultText": "success",
+  "resMessageObj": { "taskId": "<req.taskId>", "fromId": "<body.botUserId>", "signalId": "<new 17-digit id>",
+                     "parentId": "<req.signalId>", "mimeType": "text", "databaseName": "<req.databaseName>",
+                     "fileName": "<base64 of the reply text>" },
+  "fromServer": "<EO_FROM_SERVER>", "eoState": "stop",
+  "reqMessageObj": { "...": "echoed unchanged" }
+}
+```
+
+### Helpers (`src/utils/eo.js`)
+
+| Function | Purpose |
+|---|---|
+| `encodeBase64(text)` / `decodeBase64(text)` | UTF-8 ⇄ base64. `decodeBase64` returns `''` for null, empty or invalid input (bad base64 or bytes that are not UTF-8) and never throws |
+| `generateSignalId()` | 17-digit numeric string: 13-digit epoch ms + 4-digit sequence. It always increases and is unique within the process |
+| `decodeContext(context)` | `{ questionKey, answerKey, expectedAns, questionUserDefinedObject, userDefinedObject, apiAnswer, englishTranslation }` with the base64 fields decoded. The two userDefined fields are decoded when they are valid base64 and kept as-is otherwise |
+| `buildEoResponse(payload, { resultCode='0', resultText='success', fileName, eoState, mimeType='text', signalId=generateSignalId(), encodeFileName=true })` | Builds the response envelope above |
+| `buildEoError(payload, { resultCode='1', resultText='failure', message })` | Same shape with `eoState: 'stop'`; `message` becomes the base64 `fileName` |
+| `resolveHandler(questionKey, answerKey)` | Looks up `registry[q][a]`, then `registry[q].default`, then the global default handler |
+
+### Adding a question/answer handler
+
+1. Create a handler, for example `src/eo/handlers/myStep.handler.js`:
+   ```js
+   const { EO_STATE } = require('../constants');
+   async function myStep(payload, decoded) {
+     // decoded.questionKey, decoded.answerKey, decoded.apiAnswer, payload.reqMessageObj, ...
+     return { fileName: 'Plain reply text (base64-encoded for you)', eoState: EO_STATE.STOP };
+   }
+   module.exports = { myStep };
+   ```
+2. Register it in `src/eo/handlers/index.js`, keyed by the **decoded** keys:
+   ```js
+   'iq+my_question': { 'iq+my_question_ans_1': myStep, default: myQuestionFallback },
+   ```
+3. Add a test to `tests/eo.test.js` (use `encodeBase64('iq+my_question')` in `context.questionKey`).
+
+Unmapped keys go to `src/eo/handlers/default.handler.js`, which replies "This step is not configured yet (...)" with `eoState 'stop'`.
+Currently registered: `iq+customer_menu` / `iq+customer_menu_ans_3`, which returns a **placeholder** order link built from `EO_ORDER_BASE_URL`. The real key/token format for the link is still pending; see the TODO in `buildOrderLink` in `src/eo/handlers/customerMenu.handler.js`.
+
+### EO environment variables
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `EO_FROM_SERVER` | `FSMAGENT` | `fromServer` value in every EO response |
+| `EO_LOG_FULL` | `true`, except `false` when `NODE_ENV=production` | See "EO logging" below |
+| `EO_ORDER_BASE_URL` | (unset) | Optional absolute http(s) URL for the placeholder order link |
+
+### EO logging
+
+- **`EO_LOG_FULL=true`:**
+  - Logs `eo.request` (the full incoming payload) and `eo.response` (the full outgoing response) at info level, each with `requestId`.
+  - Keys that look secret (password, token, ...) are redacted, but nothing is truncated, so `LOG_BODY_MAX_LENGTH` does not apply here. `deviceId` and `fromEmail` are not redacted.
+  - The access log entry for the request skips its own truncated body copy and adds `bodiesLoggedAs: "eo.request/eo.response"` instead.
+- **`EO_LOG_FULL=false`:**
+  - Logs a single `eo.response` entry with only `taskId`, `signalId`, `parentId`, `sessionDate`, `botUserId`, the decoded `questionKey`/`answerKey`, `resultCode`, `eoState`, plus `resSignalId`, `handler` and `durationMs`.
+  - The access log works as usual, so `LOG_BODIES` still decides whether it includes truncated bodies.
 
 ## Logging
 
@@ -104,10 +177,11 @@ All logging goes through winston (`src/config/logger.js`).
 │   │   ├── validate.js         # zod body validation
 │   │   ├── notFound.js         # 404 handler
 │   │   └── errorHandler.js     # central error handler (AppError, zod, mongoose, body-parser)
-│   ├── routes                  # index.js (/api/v1), health.routes.js, user.routes.js
-│   ├── controllers             # health.controller.js, user.controller.js
+│   ├── routes                  # index.js (/api/v1), eo.routes.js (/api), health.routes.js, user.routes.js
+│   ├── controllers             # health.controller.js, user.controller.js, eo.controller.js
+│   ├── eo                      # constants.js (result codes), handlers/ (EO question/answer registry)
 │   ├── models                  # user.model.js (scrypt password hash, hidden in JSON)
-│   └── utils                   # AppError.js, asyncHandler.js, sanitize.js (redact/truncate)
+│   └── utils                   # AppError.js, asyncHandler.js, sanitize.js (redact/truncate), eo.js (EO helpers)
 ├── tests                       # node:test + supertest (no DB required)
 ├── logs/.gitkeep
 ├── .env.example                # every variable, documented
@@ -135,6 +209,7 @@ Target URL: `https://devvir.cognitivemobile.net/iqagent/<ANGULAR_APP_NAME>/`
 | --- | --- |
 | `${APP_BASE_PATH}/health`, `/health/ready` | health routes (also at `/health` for local checks) |
 | `${APP_BASE_PATH}/api/v1/...` | API (also at `/api/v1` for local checks) |
+| `${APP_BASE_PATH}/api/customerOrderRequestEo` | EO bot endpoint (also at `/api/customerOrderRequestEo`) |
 | `${APP_BASE_PATH}/<name>` | 301 → `${APP_BASE_PATH}/<name>/` |
 | `${APP_BASE_PATH}/<name>/main.abc123.js` | static file, `Cache-Control: public, max-age=31536000, immutable` |
 | `${APP_BASE_PATH}/<name>/` and deep links (`/orders/5`) | `index.html`, `Cache-Control: no-cache` |

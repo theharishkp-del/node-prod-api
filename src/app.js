@@ -16,6 +16,7 @@ const notFound = require('./middlewares/notFound');
 const errorHandler = require('./middlewares/errorHandler');
 const healthRoutes = require('./routes/health.routes');
 const apiRoutes = require('./routes');
+const eoRoutes = require('./routes/eo.routes');
 const logger = require('./config/logger');
 const { buildAngularApps } = require('./middlewares/angularStatic');
 
@@ -69,6 +70,8 @@ function createApp() {
 
   for (const p of prefixes) {
     app.use(`${p}/api`, apiLimiter);
+    // EO bot endpoints live directly under /api (exact paths configured on the bot platform).
+    app.use(`${p}/api`, eoRoutes);
     app.use(`${p}/api/v1`, apiRoutes);
   }
 

@@ -92,6 +92,13 @@ const envSchema = z.object({
       "must look like 'name1:path1,name2:path2'",
     )
     .optional(),
+
+  // EO (bot conversation step) endpoint: POST /api/customerOrderRequestEo
+  EO_FROM_SERVER: z.string().min(1).default('FSMAGENT'),
+  // Unset -> true unless NODE_ENV=production (resolved below).
+  EO_LOG_FULL: z.stringbool().optional(),
+  // TODO(placeholder): base URL used in the order link until the real key-token format is known.
+  EO_ORDER_BASE_URL: z.url({ protocol: /^https?$/, error: 'must be an absolute http(s) URL' }).optional(),
 });
 
 // Treat empty strings ("FOO=") as "not set" so defaults apply.
@@ -239,6 +246,12 @@ const config = Object.freeze({
   angular: Object.freeze({
     enabled: env.ANGULAR_ENABLED,
     apps: Object.freeze(parseAngularApps(env)),
+  }),
+
+  eo: Object.freeze({
+    fromServer: env.EO_FROM_SERVER,
+    logFull: env.EO_LOG_FULL ?? env.NODE_ENV !== 'production',
+    orderBaseUrl: env.EO_ORDER_BASE_URL || '',
   }),
 });
 
