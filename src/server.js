@@ -1,12 +1,12 @@
 'use strict';
 
 /**
- * Process entry point:
+ * @file Process entry point:
  *  1. validate config (fails fast on bad env)
  *  2. start the HTTP server
  *  3. connect to MongoDB with retry/backoff (readiness stays 503 until connected;
  *     the process exits if all retries fail)
- *  4. graceful shutdown on SIGTERM/SIGINT and on fatal errors
+ *  4. graceful shutdown on SIGTERM/SIGINT and on fatal errors (crashes are logged first)
  */
 const http = require('http');
 const config = require('./config');
@@ -26,6 +26,13 @@ server.requestTimeout = 30_000;
 
 let shuttingDown = false;
 
+/**
+ * Stop accepting connections, drain in-flight requests, close MongoDB, flush logs, exit.
+ * Forces exit after SHUTDOWN_TIMEOUT_MS. Safe to call more than once.
+ * @param {string} reason Logged cause (signal or error type).
+ * @param {number} [exitCode=0]
+ * @returns {Promise<void>}
+ */
 async function shutdown(reason, exitCode = 0) {
   if (shuttingDown) return;
   shuttingDown = true;
@@ -67,7 +74,7 @@ async function shutdown(reason, exitCode = 0) {
   process.exit(exitCode);
 }
 
-// ---- Process-level handlers -------------------------------------------------------
+// Process-level handlers: crashes are logged with their stack, then shut down cleanly.
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
@@ -86,7 +93,6 @@ process.on('uncaughtException', (err, origin) => {
 
 process.on('warning', (warning) => logger.warn('Process warning', { err: warning }));
 
-// ---- Start --------------------------------------------------------------------------
 server.on('error', (err) => {
   logger.error('HTTP server error', { err });
   shutdown('serverError', 1);
@@ -100,9 +106,8 @@ server.listen(config.port, config.host, () => {
     node: process.version,
     logBodies: config.log.bodies,
     logDir: config.log.toFile ? config.log.dir : null,
+    logRotation: `${config.log.rotateFrequency}, ${config.log.retentionDays}d retention`,
   });
-  // PM2 (wait_ready: true) waits for this signal before routing traffic.
-  if (typeof process.send === 'function') process.send('ready');
 });
 
 connectDatabase().catch((err) => {

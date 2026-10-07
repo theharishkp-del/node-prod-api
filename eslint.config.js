@@ -1,5 +1,6 @@
 'use strict';
 
+/** @file ESLint flat config: recommended rules for CommonJS on Node. */
 const js = require('@eslint/js');
 const globals = require('globals');
 

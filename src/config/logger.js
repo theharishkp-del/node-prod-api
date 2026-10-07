@@ -1,19 +1,18 @@
 'use strict';
 
 /**
- * Application logger (winston).
+ * @file Application logger (winston).
  *
  * Transports:
- *  - Console: colourised, human-readable in development; JSON elsewhere (good for
- *    container log collectors).
- *  - logs/app-%DATE%.log   : all levels >= LOG_LEVEL, JSON lines.
- *  - logs/error-%DATE%.log : level "error" only, JSON lines.
+ *  - Console: colourised and human-readable in development, JSON lines elsewhere.
+ *  - <LOG_DIR>/app-%DATE%.log   : every entry >= LOG_LEVEL, JSON lines.
+ *  - <LOG_DIR>/error-%DATE%.log : "error" entries only, JSON lines.
  *
- * Rotation (winston-daily-rotate-file):
- *  - datePattern "GGGG-[W]WW" -> one file per ISO week (e.g. app-2026-W41.log).
- *  - maxSize       -> also rolls within a week when the file grows too big (.1, .2, ...).
- *  - zippedArchive -> rotated files are gzipped.
- *  - maxFiles      -> retention ("12w" = 12 weeks, or a plain file count).
+ * Rotation (winston-daily-rotate-file) is driven by env, see buildRotationOptions():
+ *  - LOG_ROTATE_FREQUENCY weekly (default) -> app-2026-W41.log, daily -> app-2026-10-07.log
+ *  - LOG_RETENTION_DAYS   -> files older than N days are deleted ('Nd')
+ *  - LOG_MAX_SIZE         -> also rolls within a period when a file grows too big (.1, .2 ...)
+ *  - rotated files are gzipped
  */
 const os = require('os');
 const fs = require('fs');
@@ -25,13 +24,43 @@ const config = require('./index');
 
 const { combine, timestamp, json, colorize, printf } = winston.format;
 
-/** Turns any Error found in the log metadata into a plain, JSON-friendly object. */
+/** moment.js date patterns per rotation frequency ('GGGG-[W]WW' = ISO week-year + week). */
+const DATE_PATTERNS = Object.freeze({
+  weekly: 'GGGG-[W]WW',
+  daily: 'YYYY-MM-DD',
+});
+
+/**
+ * Map the logging config to winston-daily-rotate-file rotation options.
+ * @param {object} logConfig
+ * @param {'weekly'|'daily'} [logConfig.rotateFrequency='weekly']
+ * @param {number} logConfig.retentionDays Number of days to keep log files.
+ * @param {string} logConfig.maxSize Size threshold such as '20m'.
+ * @returns {{datePattern: string, maxFiles: string, maxSize: string, zippedArchive: boolean}}
+ */
+function buildRotationOptions({ rotateFrequency = 'weekly', retentionDays, maxSize }) {
+  const datePattern = DATE_PATTERNS[rotateFrequency];
+  if (!datePattern) throw new Error(`Unknown log rotation frequency: ${rotateFrequency}`);
+  return {
+    datePattern,
+    maxFiles: `${retentionDays}d`,
+    maxSize,
+    zippedArchive: true,
+  };
+}
+
+/**
+ * Turn an Error into a plain, JSON-friendly object (follows Error causes, max 3 levels).
+ * @param {*} err Any value; non-Errors are returned unchanged.
+ * @param {number} [depth=0]
+ * @returns {*}
+ */
 function serializeError(err, depth = 0) {
   if (!(err instanceof Error)) return err;
   const out = { name: err.name, message: err.message, stack: err.stack };
   for (const key of ['code', 'statusCode', 'errorCode', 'codeName']) {
     const v = err[key];
-    if (v !== undefined && (typeof v === 'string' || typeof v === 'number')) out[key] = v;
+    if (typeof v === 'string' || typeof v === 'number') out[key] = v;
   }
   // Only follow Error causes (driver errors can carry huge topology objects elsewhere).
   if (err.cause instanceof Error && depth < 3) out.cause = serializeError(err.cause, depth + 1);
@@ -48,8 +77,6 @@ const errorSerializer = winston.format((info) => {
   return info;
 });
 
-const baseFormat = combine(timestamp(), errorSerializer());
-
 const devConsoleFormat = combine(
   colorize(),
   printf((info) => {
@@ -65,29 +92,31 @@ const devConsoleFormat = combine(
   }),
 );
 
-// When running under PM2 cluster mode each worker writes its own file set, because
-// winston-daily-rotate-file is not safe for several processes rotating the same file.
+// Several processes must not rotate the same file, so cluster workers (NODE_APP_INSTANCE,
+// set e.g. by PM2) each get their own file set.
 const instance = process.env.NODE_APP_INSTANCE;
 const instanceSuffix = instance !== undefined ? `-${instance}` : '';
+const rotation = buildRotationOptions(config.log);
 
+/**
+ * Create a rotating JSON file transport.
+ * @param {string} name File prefix ('app' or 'error').
+ * @param {string} level Minimum level written to the file.
+ * @returns {DailyRotateFile}
+ */
 function fileTransport(name, level) {
   return new DailyRotateFile({
+    ...rotation,
     level,
     dirname: config.log.dir,
     filename: `${name}-%DATE%${instanceSuffix}.log`,
-    datePattern: config.log.datePattern,
-    zippedArchive: true,
-    maxSize: config.log.maxSize,
-    maxFiles: config.log.maxFiles,
     auditFile: path.join(config.log.dir, `.${name}${instanceSuffix}-audit.json`),
     format: json(),
   });
 }
 
 const transports = [
-  new winston.transports.Console({
-    format: config.isDevelopment ? devConsoleFormat : json(),
-  }),
+  new winston.transports.Console({ format: config.isDevelopment ? devConsoleFormat : json() }),
 ];
 
 const fileTransports = [];
@@ -99,7 +128,7 @@ if (config.log.toFile) {
 
 const logger = winston.createLogger({
   level: config.log.level,
-  format: baseFormat,
+  format: combine(timestamp(), errorSerializer()),
   defaultMeta: {
     service: config.appName,
     env: config.env,
@@ -110,7 +139,7 @@ const logger = winston.createLogger({
   exitOnError: false,
 });
 
-// ---- Rotation / retention events ---------------------------------------------------
+// Rotation / retention lifecycle events.
 for (const t of fileTransports) {
   t.on('new', (filename) => logger.info('Log file opened', { event: 'log.new', filename }));
   t.on('rotate', (oldFilename, newFilename) =>
@@ -122,21 +151,21 @@ for (const t of fileTransports) {
   t.on('logRemoved', (removedFilename) =>
     logger.info('Old log file removed (retention)', { event: 'log.removed', removedFilename }),
   );
-  t.on('error', (err) => {
-    // Avoid recursion into the failing transport: report on stderr.
-    process.stderr.write(`[logger] file transport error: ${err && err.stack}\n`);
-  });
+  // Report on stderr to avoid recursing into the failing transport.
+  t.on('error', (err) => process.stderr.write(`[logger] file transport error: ${err && err.stack}\n`));
 }
 
-/**
- * Flush and close file transports. Call once during shutdown, after the last log line.
- * Resolves after all file streams have finished (or after `timeoutMs`).
- */
 let flushed = null;
+
+/**
+ * Flush and close the file transports. Call once during shutdown, after the last log line.
+ * @param {number} [timeoutMs=3000] Maximum time to wait for the streams to finish.
+ * @returns {Promise<void>} Resolves when all file streams have finished (or on timeout).
+ */
 function flushLogger(timeoutMs = 3000) {
   if (flushed) return flushed;
   flushed = new Promise((resolve) => {
-    // Let winston's internal stream pipeline hand pending entries to the transports.
+    // Let winston's internal stream pipeline hand pending entries to the transports first.
     setTimeout(() => {
       if (fileTransports.length === 0) return resolve();
       let pending = fileTransports.length;
@@ -161,3 +190,5 @@ function flushLogger(timeoutMs = 3000) {
 module.exports = logger;
 module.exports.flushLogger = flushLogger;
 module.exports.serializeError = serializeError;
+module.exports.buildRotationOptions = buildRotationOptions;
+module.exports.DATE_PATTERNS = DATE_PATTERNS;

@@ -1,13 +1,14 @@
 'use strict';
 
 /**
- * MongoDB connection (mongoose).
+ * @file MongoDB connection (mongoose).
  *
  * - connectDatabase(): connects with exponential backoff + jitter on startup.
  *   MONGO_CONNECT_RETRIES=0 retries forever; otherwise throws after N failed attempts.
  * - Logs connection lifecycle events (connected, disconnected, reconnected, error...).
  * - After the first successful connection the MongoDB driver handles reconnects itself.
  * - closeDatabase(): graceful close used during shutdown.
+ * - getDatabaseState(): connection state for health/readiness checks.
  */
 const mongoose = require('mongoose');
 const config = require('./index');
@@ -42,8 +43,12 @@ const connectionOptions = {
   appName: config.appName,
 };
 
-/** Hide credentials when logging the connection string. */
-function redactUri(uri) {
+/**
+ * Mask the user:password part of a connection string so it can be logged.
+ * @param {string} uri
+ * @returns {string}
+ */
+function maskUriCredentials(uri) {
   return uri.replace(/\/\/([^@/]+)@/, '//***:***@');
 }
 
@@ -51,6 +56,7 @@ let listenersAttached = false;
 let shuttingDown = false;
 let hasConnectedOnce = false; // startup failures are reported by the retry loop instead
 
+/** Attach connection lifecycle loggers once. */
 function attachListeners() {
   if (listenersAttached) return;
   listenersAttached = true;
@@ -74,6 +80,11 @@ function attachListeners() {
   });
 }
 
+/**
+ * Exponential backoff delay with jitter for a 1-based attempt number.
+ * @param {number} attempt
+ * @returns {number} Delay in ms.
+ */
 function backoffDelay(attempt) {
   const { retryInitialDelayMs, retryMaxDelayMs } = config.mongo;
   const exp = Math.min(retryMaxDelayMs, retryInitialDelayMs * 2 ** (attempt - 1));
@@ -82,9 +93,10 @@ function backoffDelay(attempt) {
 }
 
 /**
- * Create the indexes declared in the schemas (e.g. unique email). Safe to run on every
- * start (createIndex is idempotent). Disable with MONGO_AUTO_INDEX=false if you manage
- * indexes with migrations on large production collections.
+ * Create the indexes declared in all registered schemas. Safe to run on every start
+ * (createIndex is idempotent). Disable with MONGO_AUTO_INDEX=false if indexes are
+ * managed by migrations on large production collections.
+ * @returns {Promise<void>}
  */
 async function ensureIndexes() {
   for (const name of mongoose.modelNames()) {
@@ -101,7 +113,8 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
  * Connect to MongoDB, retrying with exponential backoff.
- * @returns {Promise<typeof mongoose>}
+ * @returns {Promise<typeof mongoose>} The connected mongoose instance.
+ * @throws {Error} When all attempts fail or shutdown started meanwhile.
  */
 async function connectDatabase() {
   attachListeners();
@@ -112,7 +125,7 @@ async function connectDatabase() {
     if (shuttingDown) throw new Error('Shutdown in progress, aborting MongoDB connect');
     try {
       logger.info('Connecting to MongoDB', {
-        uri: redactUri(uri),
+        uri: maskUriCredentials(uri),
         attempt,
         maxAttempts: Number.isFinite(maxAttempts) ? maxAttempts : 'infinite',
       });
@@ -135,6 +148,10 @@ async function connectDatabase() {
   }
 }
 
+/**
+ * Close the MongoDB connection (no-op when already disconnected) and stop retrying.
+ * @returns {Promise<void>}
+ */
 async function closeDatabase() {
   shuttingDown = true;
   if (mongoose.connection.readyState === 0) return;
@@ -142,6 +159,10 @@ async function closeDatabase() {
   await mongoose.connection.close(false);
 }
 
+/**
+ * Current connection state.
+ * @returns {{state: string, isConnected: boolean}}
+ */
 function getDatabaseState() {
   const state = mongoose.connection.readyState;
   return { state: STATES[state] || 'unknown', isConnected: state === 1 };

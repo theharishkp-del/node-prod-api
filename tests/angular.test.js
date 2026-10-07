@@ -1,5 +1,6 @@
 'use strict';
 
+/** @file Angular static hosting under APP_BASE_PATH/<ANGULAR_APP_NAME> (fake dist folder). */
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -68,11 +69,12 @@ test('missing file with extension is a 404, not index.html', async () => {
 });
 
 test('api paths are not swallowed by the SPA fallback', async () => {
-  const res = await request(app).get('/iqagent/api/v1').expect(200);
-  assert.equal(res.body.message, 'API v1');
+  const res = await request(app).post('/iqagent/api/customerOrderRequestEo').send({}).expect(200);
+  assert.equal(res.body.eoState, 'stop');
   const inside = await request(app).get('/iqagent/portal/api/anything').expect(404);
   assert.equal(inside.body.error.code, 'ROUTE_NOT_FOUND');
-  await request(app).get('/iqagent/api/v1/nope').expect(404);
+  const unknown = await request(app).get('/iqagent/api/nope').expect(404);
+  assert.equal(unknown.body.error.code, 'ROUTE_NOT_FOUND');
 });
 
 test('health works under base path and at root; API keeps strict CSP', async () => {
