@@ -61,7 +61,8 @@ test('access log writes bodies as-is (no redaction) and truncates large ones', a
     assert.deepEqual(access[0].reqBody, { password: 'p@ss', token: 't0k' });
     assert.equal(access[0].requestId, undefined);
     assert.equal(access[0].status, 200);
-    assert.match(access[0].resBody, /^\{"resultCode":"0"/, 'response body captured (truncated)');
+    // No botUserId -> EO failure envelope from resolveTenantFromEo (no DB needed).
+    assert.match(access[0].resBody, /^\{"resultCode":"1"/, 'response body captured (truncated)');
     assert.match(access[1].reqBody, /\[truncated, \d+ chars total\]$/);
   } finally {
     logs.restore();

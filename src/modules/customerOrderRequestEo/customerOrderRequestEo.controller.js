@@ -7,6 +7,9 @@
  * then buildEoError(): resultCode '1', eoState 'stop'), because the bot platform reads
  * resultCode/eoState rather than the HTTP status.
  *
+ * Requires req.tenant (set by resolveTenantFromEo). The exchange is saved to the tenant's
+ * eo_sessions collection before replying; a failed save is logged and the reply still sent.
+ *
  * Logging: EO_LOG_FULL=true logs the full request payload and response as-is (never
  * truncated); otherwise only the compact eoLogSummary() fields are logged.
  */
@@ -33,10 +36,19 @@ async function customerOrderRequestEo(req, res) {
   if (logFull) {
     // The access log skips its truncated body copy for this request to avoid duplicates.
     res.locals.bodyLoggedSeparately = 'eo.request/eo.response';
-    logger.info('eo.request', { event: 'eo.request', ...eoLogSummary(payload, decoded), payload });
+    logger.info('eo.request', {
+      event: 'eo.request',
+      orgId: req.tenant.org.orgId,
+      ...eoLogSummary(payload, decoded),
+      payload,
+    });
   }
 
-  const { handler, response, error } = await processCustomerOrderRequest(payload, decoded);
+  const { handler, response, error, sessionSaved } = await processCustomerOrderRequest(
+    payload,
+    decoded,
+    req.tenant,
+  );
 
   if (error) {
     logger.error('eo.handler_error', {
@@ -50,6 +62,8 @@ async function customerOrderRequestEo(req, res) {
   const meta = {
     event: 'eo.response',
     handler: handler.name,
+    orgId: req.tenant.org.orgId,
+    sessionSaved,
     durationMs: Math.round((Number(process.hrtime.bigint() - start) / 1e6) * 100) / 100,
     ...eoLogSummary(payload, decoded, response),
   };

@@ -1,7 +1,7 @@
 {
   "name": "node-prod-api",
   "version": "1.0.0",
-  "description": "Express 5 + MongoDB API with feature modules, winston logging with env-driven log rotation and EO bot endpoints",
+  "description": "Express 5 + MongoDB multi-tenant API (master + per-organization DBs) with feature modules, admin API + Angular admin UI, winston logging and EO bot endpoints",
   "main": "src/server.js",
   "private": true,
   "license": "MIT",
@@ -11,9 +11,13 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "node --watch src/server.js",
+    "seed": "node scripts/seed.js",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "node --test tests/*.test.js tests/*/*.test.js"
+    "test": "node --test tests/*.test.js tests/*/*.test.js",
+    "client:install": "npm --prefix client ci",
+    "client:build": "npm --prefix client run build",
+    "client:dev": "npm --prefix client start"
   },
   "dependencies": {
     "compression": "^1.8.2",
@@ -30,6 +34,12 @@
     "@eslint/js": "^9.39.5",
     "eslint": "^9.39.5",
     "globals": "^16.5.0",
+    "mongodb-memory-server": "^11.3.0",
     "supertest": "^7.3.1"
+  },
+  "config": {
+    "mongodbMemoryServer": {
+      "version": "7.0.24"
+    }
   }
 }

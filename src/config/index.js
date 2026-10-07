@@ -88,6 +88,16 @@ const envSchema = z.object({
   EO_LOG_FULL: z.stringbool().optional(),
   // TODO(placeholder): base URL used in the order link until the real key-token format is known.
   EO_ORDER_BASE_URL: z.url({ protocol: /^https?$/, error: 'must be an absolute http(s) URL' }).optional(),
+
+  // Multi-tenancy: master registry DB + one DB per organization on the same connection
+  MASTER_DB_NAME: z
+    .string()
+    .regex(/^[A-Za-z0-9_-]{1,38}$/, 'must be 1-38 chars of letters, digits, _ or -')
+    .default('iq_master'),
+  TENANT_CACHE_TTL_SECONDS: z.coerce.number().int().min(0).default(300), // 0 = no caching
+
+  // Admin API (/api/admin/*): required in production, optional (open + warning) otherwise
+  ADMIN_API_KEY: z.string().min(16, 'must be at least 16 characters').optional(),
 });
 
 /**
@@ -133,6 +143,9 @@ if (env.MONGO_MIN_POOL_SIZE > env.MONGO_MAX_POOL_SIZE) {
 }
 if (env.CORS_CREDENTIALS && csv(env.CORS_ORIGIN).includes('*')) {
   fail('CORS_CREDENTIALS=true cannot be combined with CORS_ORIGIN=*; list explicit origins');
+}
+if (env.NODE_ENV === 'production' && !env.ADMIN_API_KEY) {
+  fail('ADMIN_API_KEY is required in production (protects /api/admin/*); use a long random value');
 }
 if (env.ANGULAR_ENABLED && !env.ANGULAR_APPS && !(env.ANGULAR_APP_NAME && env.ANGULAR_DIST_PATH)) {
   fail('ANGULAR_ENABLED=true requires ANGULAR_APP_NAME + ANGULAR_DIST_PATH (or ANGULAR_APPS)');
@@ -231,6 +244,15 @@ const config = Object.freeze({
     fromServer: env.EO_FROM_SERVER,
     logFull: env.EO_LOG_FULL ?? env.NODE_ENV !== 'production',
     orderBaseUrl: env.EO_ORDER_BASE_URL || '',
+  }),
+
+  tenancy: Object.freeze({
+    masterDbName: env.MASTER_DB_NAME,
+    cacheTtlMs: env.TENANT_CACHE_TTL_SECONDS * 1000,
+  }),
+
+  admin: Object.freeze({
+    apiKey: env.ADMIN_API_KEY || '',
   }),
 });
 

@@ -12,6 +12,7 @@ const http = require('http');
 const config = require('./config');
 const logger = require('./config/logger');
 const { connectDatabase, closeDatabase } = require('./config/database');
+const { ensureMasterIndexes } = require('./shared/tenancy');
 const createApp = require('./app');
 
 const { flushLogger } = logger;
@@ -110,10 +111,20 @@ server.listen(config.port, config.host, () => {
   });
 });
 
-connectDatabase().catch((err) => {
-  if (shuttingDown) return;
-  logger.error('Could not connect to MongoDB, exiting', { err });
-  shutdown('mongoConnectFailed', 1);
-});
+connectDatabase()
+  .then(async () => {
+    if (!config.mongo.autoIndex) return;
+    try {
+      await ensureMasterIndexes();
+      logger.info('Master DB indexes ensured', { db: config.tenancy.masterDbName });
+    } catch (err) {
+      logger.error('Failed to ensure master DB indexes', { db: config.tenancy.masterDbName, err });
+    }
+  })
+  .catch((err) => {
+    if (shuttingDown) return;
+    logger.error('Could not connect to MongoDB, exiting', { err });
+    shutdown('mongoConnectFailed', 1);
+  });
 
 module.exports = server;

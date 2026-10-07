@@ -36,6 +36,7 @@ function inspectLogger(extra) {
   const env = {
     PATH: process.env.PATH,
     NODE_ENV: 'production',
+    ADMIN_API_KEY: 'test-admin-key-0123456789', // required in production
     MONGODB_URI: 'mongodb://127.0.0.1:27017/x',
     LOG_TO_FILE: 'true',
     LOG_LEVEL: 'error',

@@ -7,7 +7,7 @@
  * Response : { resultCode, resultText, resMessageObj, fromServer, eoState, reqMessageObj }
  *
  * Nothing here touches the database or knows about a specific EO API; each module passes
- * its own handler registry to resolveHandler().
+ * its own handler registry to resolveHandler(). Persistence lives in session.service.js.
  */
 const config = require('../../config');
 const { EO_RESULT, EO_STATE } = require('./constants');
@@ -237,19 +237,20 @@ function eoLogSummary(payload, decoded, response) {
  * Run one EO step: decode the context, pick the handler from `registry`, run it and wrap
  * its result in an EO envelope. A handler that throws yields a buildEoError() envelope
  * (the error is returned for logging), so callers can always answer HTTP 200.
- * Handlers are `async (payload, decoded) => ({ fileName, eoState?, mimeType? })`.
+ * Handlers are `async (payload, decoded, ctx) => ({ fileName, eoState?, mimeType? })`.
  * @param {object} payload Incoming request body.
  * @param {object} options
  * @param {Object<string, Object<string, Function>>} options.registry Handler registry.
  * @param {Function} options.defaultHandler Fallback handler.
  * @param {object} [options.decoded] Already decoded context (decoded here when omitted).
+ * @param {object} [options.ctx] Passed to the handler as 3rd argument (e.g. { tenant }).
  * @returns {Promise<{decoded: object, handler: Function, response: object, error?: Error}>}
  */
-async function runEoStep(payload, { registry, defaultHandler, decoded }) {
+async function runEoStep(payload, { registry, defaultHandler, decoded, ctx = {} }) {
   decoded = decoded || decodeContext(asObject(payload).context);
   const handler = resolveHandler(decoded.questionKey, decoded.answerKey, registry, defaultHandler);
   try {
-    const out = (await handler(payload, decoded)) || {};
+    const out = (await handler(payload, decoded, ctx)) || {};
     const response = buildEoResponse(payload, {
       fileName: out.fileName,
       eoState: out.eoState || EO_STATE.STOP,
@@ -264,6 +265,7 @@ async function runEoStep(payload, { registry, defaultHandler, decoded }) {
 module.exports = {
   encodeBase64,
   decodeBase64,
+  decodeMaybeBase64,
   generateSignalId,
   decodeContext,
   buildEoResponse,
